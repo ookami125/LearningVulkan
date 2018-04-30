@@ -1,6 +1,14 @@
 #pragma once
+#include <vulkan\vulkan.h>
+#include <glm\glm.hpp>
+#include <array>
 
 struct Vertex {
-	float position[3];
-	float color[3];
+	glm::vec3 pos;
+	glm::vec3 color;
+	glm::vec2 texCoord;
+
+	static VkVertexInputBindingDescription getBindingDescription();
+	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
+	bool operator==(const Vertex& other) const;
 };

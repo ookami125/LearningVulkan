@@ -1,23 +1,13 @@
-
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/hash.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-
-//#define TINYOBJLOADER_IMPLEMENTATION
-//#include <tiny_obj_loader.h>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 #include <iostream>
 #include <fstream>
@@ -30,6 +20,13 @@
 #include <array>
 #include <set>
 #include <unordered_map>
+
+#include "Vertex.h"
+#include "GLMAssimp.h"
+#include "ResourceManager.h"
+#include "Texture.h"
+#include "AssimpUtils.h"
+#include "Model.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -50,26 +47,6 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
-
-glm::vec4 vec4(aiColor4D other)
-{
-	return glm::vec4(other.r, other.g, other.b, other.a);
-}
-
-glm::vec3 vec3(aiColor3D other)
-{
-	return glm::vec3(other.r, other.g, other.b);
-}
-
-glm::vec3 vec3(aiVector3D other)
-{
-	return glm::vec3(other.x, other.y, other.z);
-}
-
-glm::vec2 vec2(aiVector2D other)
-{
-	return glm::vec2(other.x, other.y);
-}
 
 VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback) {
 	auto func = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
@@ -102,54 +79,6 @@ struct SwapChainSupportDetails {
 	std::vector<VkSurfaceFormatKHR> formats;
 	std::vector<VkPresentModeKHR> presentModes;
 };
-
-struct Vertex {
-	glm::vec3 pos;
-	glm::vec3 color;
-	glm::vec2 texCoord;
-
-	static VkVertexInputBindingDescription getBindingDescription() {
-		VkVertexInputBindingDescription bindingDescription = {};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof(Vertex);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-		return bindingDescription;
-	}
-
-	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
-		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
-
-		attributeDescriptions[0].binding = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-		attributeDescriptions[1].binding = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-		attributeDescriptions[2].binding = 0;
-		attributeDescriptions[2].location = 2;
-		attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
-
-		return attributeDescriptions;
-	}
-
-	bool operator==(const Vertex& other) const {
-		return pos == other.pos && color == other.color && texCoord == other.texCoord;
-	}
-};
-
-namespace std {
-	template<> struct hash<Vertex> {
-		size_t operator()(Vertex const& vertex) const {
-			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
-		}
-	};
-}
 
 struct UniformBufferObject {
 	glm::mat4 model;
@@ -203,8 +132,8 @@ private:
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
+	//std::vector<Vertex> vertices;
+	//std::vector<uint32_t> indices;
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
@@ -220,6 +149,9 @@ private:
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
+
+	ResourceManager resourceManager;
+	Model* model;
 
 	void initWindow() {
 		glfwInit();
@@ -246,7 +178,7 @@ private:
 		//createTextureImage();
 		//createTextureImageView();
 		//createTextureSampler();
-		loadModel();
+		model = new Model("models/Samba Dancing.fbx");
 		createVertexBuffer();
 		createIndexBuffer();
 		createUniformBuffer();
@@ -591,14 +523,14 @@ private:
 		uboLayoutBinding.pImmutableSamplers = nullptr;
 		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-		VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-		samplerLayoutBinding.binding = 1;
-		samplerLayoutBinding.descriptorCount = 1;
-		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		samplerLayoutBinding.pImmutableSamplers = nullptr;
-		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		//VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+		//samplerLayoutBinding.binding = 1;
+		//samplerLayoutBinding.descriptorCount = 1;
+		//samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		//samplerLayoutBinding.pImmutableSamplers = nullptr;
+		//samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+		std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };//, samplerLayoutBinding };
 		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -1094,80 +1026,8 @@ private:
 		endSingleTimeCommands(commandBuffer);
 	}
 
-	void loadModel()
-	{
-		Assimp::Importer importer;
-		auto scene = importer.ReadFile(MODEL_PATH.c_str(), aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs | aiProcess_Triangulate);
-		if (!scene){
-			throw std::runtime_error(importer.GetErrorString());
-		}
-
-		if (scene->HasMaterials())
-		{
-			for (int i = 0; i < scene->mNumMaterials; ++i)
-			{
-				auto material = scene->mMaterials[i];
-				aiString name;
-				material->Get(AI_MATKEY_NAME, name);
-				printf("AI_MATKEY_NAME: %s\n", name.C_Str());
-				aiColor3D color(0.f, 0.f, 0.f);
-				material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-				printf("AI_MATKEY_COLOR_DIFFUSE: vec3(%f, %f, %f)\n", color.r, color.g, color.b);
-
-			}
-		}
-
-		if (scene->HasMeshes())
-		{
-			int numMeshes = scene->mNumMeshes;
-			for (int i = 0; i < numMeshes; i++)
-			{
-				auto mesh = scene->mMeshes[i];
-				auto materialIdx = mesh->mMaterialIndex;
-				auto material = scene->mMaterials[materialIdx];
-				aiColor3D materialColor(1.f, 1.f, 1.f);
-				material->Get(AI_MATKEY_COLOR_DIFFUSE, materialColor);
-
-				if (mesh->HasFaces())
-				{
-					int offset = vertices.size();
-					int numFaces = mesh->mNumFaces;
-					for (int j = 0; j < numFaces; j++)
-					{
-						auto face = mesh->mFaces[j];
-						indices.push_back(face.mIndices[0] + offset);
-						indices.push_back(face.mIndices[1] + offset);
-						indices.push_back(face.mIndices[2] + offset);
-					}
-				}
-
-				if (mesh->HasPositions())
-				{
-					int numPositions = mesh->mNumVertices;
-					for (int j = 0; j < numPositions; j++)
-					{
-						Vertex Vert;
-						Vert.pos = vec3(mesh->mVertices[j]);
-						Vert.color		= (mesh->HasVertexColors(0))		 ? (glm::vec3)vec4(mesh->mColors[0][j])			: (glm::vec3)vec3(materialColor);
-						Vert.texCoord	= (mesh->HasTextureCoords(0))		 ? (glm::vec2)vec3(mesh->mTextureCoords[0][j])	: glm::vec2{ 0, 0 };
-						//Vert.normal	= (mesh->HasNormals())				 ? (glm::vec3)vec3(mesh->mNormals[j])			: glm::vec3{ 0, 0, 0 };
-						//Vert.tangent	= (mesh->HasTangentsAndBitangents()) ? (glm::vec3)vec3(mesh->mTangents[j])			: glm::vec3{ 0, 0, 0 };
-						//Vert.biTangent= (mesh->HasTangentsAndBitangents()) ? (glm::vec3)vec3(mesh->mBitangents[j])		: glm::vec3{ 0, 0, 0 };
-						vertices.push_back(Vert);
-					}
-				}
-				//break;
-			}
-		}
-
-		if (scene->HasTextures())
-		{
-			printf("I haz texture\n");
-		}
-	}
-
 	void createVertexBuffer() {
-		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+		VkDeviceSize bufferSize = sizeof(model->meshes[0]->vertices[0]) * (model->meshes[0]->vertices_count);
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
@@ -1175,7 +1035,7 @@ private:
 
 		void* data;
 		vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, vertices.data(), (size_t)bufferSize);
+		memcpy(data, model->meshes[0]->vertices, (size_t)bufferSize);
 		vkUnmapMemory(device, stagingBufferMemory);
 
 		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
@@ -1187,7 +1047,7 @@ private:
 	}
 
 	void createIndexBuffer() {
-		VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+		VkDeviceSize bufferSize = sizeof(model->meshes[0]->indices[0]) * model->meshes[0]->index_count;
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
@@ -1195,7 +1055,7 @@ private:
 
 		void* data;
 		vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, indices.data(), (size_t)bufferSize);
+		memcpy(data, model->meshes[0]->indices, (size_t)bufferSize);
 		vkUnmapMemory(device, stagingBufferMemory);
 
 		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
@@ -1402,7 +1262,7 @@ private:
 
 			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
-			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(model->meshes[0]->index_count), 1, 0, 0, 0);
 
 			vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -1430,7 +1290,7 @@ private:
 		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 		UniformBufferObject ubo = {};
-		ubo.model = glm::rotate(glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(0.1f)), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)), time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		ubo.model = glm::rotate(glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)), time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		ubo.view = glm::lookAt(glm::vec3(20.0f, 20.0f, 10.0f), glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.0f);
 		ubo.proj[1][1] *= -1;
@@ -1694,7 +1554,7 @@ private:
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
 		if (!file.is_open()) {
-			throw std::runtime_error("failed to open file!");
+			throw std::runtime_error("failed to open file "+filename+"!");
 		}
 
 		size_t fileSize = (size_t)file.tellg();
@@ -1723,6 +1583,7 @@ int main() {
 	}
 	catch (const std::runtime_error& e) {
 		std::cerr << e.what() << std::endl;
+		system("pause");
 		return EXIT_FAILURE;
 	}
 
