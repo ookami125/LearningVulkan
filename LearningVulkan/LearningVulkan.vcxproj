@@ -70,12 +70,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\Libraries\stb_libs;D:\Libraries\GLFW\include;D:\Libraries\GLM;D:\Libraries\VulkanSDK\1.0.68.0\Include;D:\Libraries\Assimp\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Libraries\GLFW\bin\32bit;D:\Libraries\VulkanSDK\1.0.68.0\Lib32;D:\Libraries\Assimp\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)includes;$(VULKAN_SDK)\Include;$(GLFW)\include;$(Assimp)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VULKAN_SDK)\Lib32;$(GLFW)\lib32;$(Assimp)\lib32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>C:\Libraries\stb_libs\include;C:\Libraries\glfw3\include;C:\Libraries\glm\include;C:\VulkanSDK\1.0.68.0\Include;C:\Libraries\assimp-4.1.0\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Libraries\glfw3\lib32;C:\VulkanSDK\1.0.68.0\Lib32;C:\Libraries\assimp-4.1.0\lib32;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)includes;$(VULKAN_SDK)\Include;$(GLFW)\include;$(Assimp)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VULKAN_SDK)\Lib32;$(GLFW)\lib32;$(Assimp)\lib32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>C:\Libraries\stb_libs\include;C:\Libraries\glfw3\include;C:\Libraries\glm\include;C:\VulkanSDK\1.0.68.0\Include;C:\Libraries\assimp-4.1.0\include;$(IncludePath)</IncludePath>
@@ -92,7 +92,7 @@
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>assimp.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc140-mt.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
