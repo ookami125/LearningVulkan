@@ -1575,18 +1575,47 @@ private:
 	}
 };
 
+#include "Animation.h"
+#include <chrono>
+#include <windows.h>
+
+void clear_screen(char fill = ' ') {
+	COORD tl = { 0,0 };
+	CONSOLE_SCREEN_BUFFER_INFO s;
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetConsoleScreenBufferInfo(console, &s);
+	DWORD written, cells = s.dwSize.X * s.dwSize.Y;
+	FillConsoleOutputCharacter(console, fill, cells, tl, &written);
+	FillConsoleOutputAttribute(console, s.wAttributes, cells, tl, &written);
+	SetConsoleCursorPosition(console, tl);
+}
+
 int main() {
-	HelloTriangleApplication app;
 
-	try {
-		app.run();
-	}
-	catch (const std::runtime_error& e) {
-		std::cerr << e.what() << std::endl;
-		system("pause");
-		return EXIT_FAILURE;
-	}
+	Model* model = new Model("models/Samba Dancing.fbx");
 
-	return EXIT_SUCCESS;
+	while (true)
+	{
+		double time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count() / 1000.0f;
+		glm::mat4 frame = model->animations[0]->GetAnimationFrame(time)[0];
+		clear_screen();
+		printf("[ %+2.3lf %+2.3lf %+2.3lf %+2.3lf \n  %+2.3lf %+2.3lf %+2.3lf %+2.3lf \n  %+2.3lf %+2.3lf %+2.3lf %+2.3lf \n  %+2.3lf %+2.3lf %+2.3lf %+2.3lf ]\n",
+			frame[0][0], frame[1][0], frame[2][0], frame[3][0],
+			frame[0][1], frame[1][1], frame[2][1], frame[3][1],
+			frame[0][2], frame[1][2], frame[2][2], frame[3][2],
+			frame[0][3], frame[1][3], frame[2][3], frame[3][3]);
+	}
+	//HelloTriangleApplication app;
+	//
+	//try {
+	//	app.run();
+	//}
+	//catch (const std::runtime_error& e) {
+	//	std::cerr << e.what() << std::endl;
+	//	system("pause");
+	//	return EXIT_FAILURE;
+	//}
+	//
+	//return EXIT_SUCCESS;
 }
 

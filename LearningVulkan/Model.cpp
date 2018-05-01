@@ -5,6 +5,7 @@
 #include "GLMAssimp.h"
 #include "Vertex.h"
 #include "ResourceManager.h"
+#include "Animation.h"
 
 Model::Model(std::string filepath)
 {
@@ -117,7 +118,49 @@ Model::Model(std::string filepath)
 		{
 			auto animation = scene->mAnimations[i];
 			aiString name = animation->mName;
+			Animation* anim = new Animation(name.C_Str());
+			anim->SetDuration(animation->mDuration);
 			printf("  %s\n", name.C_Str());
+			
+			int numChannels = animation->mNumChannels;
+			for (int i = 0; i < numChannels; ++i)
+			{
+				auto channel = animation->mChannels[i];
+				Bone* bone = new Bone(channel->mNodeName.C_Str());
+				//printf("    node name: %s\n", channel->mNodeName.C_Str());
+
+				int numPositionKeys = channel->mNumPositionKeys;
+				for (int j = 0; j < numPositionKeys; ++j)
+				{
+					auto positionKey = channel->mPositionKeys[j];
+					glm::vec3 pos = vec3(positionKey.mValue);
+					bone->AddPositionKey(positionKey.mTime, pos);
+					//printf("      %f - {%f,%f,%f}\n", positionKey.mTime, pos.x, pos.y, pos.z);
+				}
+
+				int numRotationKeys = channel->mNumRotationKeys;
+				for (int j = 0; j < numRotationKeys; ++j)
+				{
+					auto rotationKey = channel->mRotationKeys[j];
+					glm::fquat rot = fquat(rotationKey.mValue);
+					bone->AddRotationKey(rotationKey.mTime, rot);
+					//printf("      %f - {%f,%f,%f,%f}\n", rotationKey.mTime, rot.x, rot.y, rot.z, rot.w);
+				}
+
+				int numScalingKeys = channel->mNumScalingKeys;
+				for (int j = 0; j < numScalingKeys; ++j)
+				{
+					auto scalingKey = channel->mScalingKeys[j];
+					glm::vec3 scale = vec3(scalingKey.mValue);
+					bone->AddScalingKey(scalingKey.mTime, scale);
+					//printf("      %f - {%f,%f,%f}\n", scalingKey.mTime, scale.x, scale.y, scale.z);
+				}
+
+				anim->AddBone(bone, 0);
+			}
+
+			anim->Compile();
+			animations.push_back(anim);
 		}
 	}
 

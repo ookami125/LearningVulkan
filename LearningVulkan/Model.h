@@ -4,6 +4,7 @@
 
 class Texture;
 struct Vertex;
+class Animation;
 
 struct Material
 {
@@ -36,6 +37,7 @@ struct Model
 	std::vector<Texture*> textures;
 	std::vector<Material*> materials;
 	std::vector<Mesh*> meshes;
+	std::vector<Animation*> animations;
 
 public:
 	Model(std::string filepath);

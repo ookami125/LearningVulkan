@@ -1,5 +1,10 @@
 #include "GLMAssimp.h"
 
+glm::fquat fquat(aiQuaternion other)
+{
+	return glm::fquat(other.x, other.y, other.z, other.w);
+}
+
 glm::vec4 vec4(aiColor4D other)
 {
 	return glm::vec4(other.r, other.g, other.b, other.a);
