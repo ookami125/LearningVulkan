@@ -19,9 +19,9 @@
 #include "VulkanDevice.h"
 #include "VulkanCommandPool.h"
 #include "VulkanCommandBuffer.h"
-//#include "VulkanSwapchain.h"
+#include "VulkanSwapchain.h"
 #include "VulkanRenderpass.h"
-//#include "FrameBufferAttachment.h"
+#include "FrameBufferAttachment.h"
 
 class VulkanRenderer
 {
@@ -38,7 +38,7 @@ private:
 	VulkanDevice * vulkanDevice;
 	VulkanCommandPool * vulkanCommandPool;
 	VulkanCommandBuffer * initCommandBuffer;
-	//VulkanSwapchain * vulkanSwapchain;
+	VulkanSwapchain * vulkanSwapchain;
 	VulkanRenderpass * forwardRenderPass;
 	VulkanRenderpass * deferredRenderPass;
 
@@ -48,12 +48,12 @@ private:
 	VkSampler colorSampler;
 	VkFramebuffer deferredFramebuffer;
 
-	//FrameBufferAttachment * positionAtt;
-	//FrameBufferAttachment * normalAtt;
-	//FrameBufferAttachment * albedoAtt;
-	//FrameBufferAttachment * materialAtt;
-	//FrameBufferAttachment * depthAtt;
-	//std::vector<FrameBufferAttachment*> attachmentsPtr;
+	FrameBufferAttachment * positionAtt;
+	FrameBufferAttachment * normalAtt;
+	FrameBufferAttachment * albedoAtt;
+	FrameBufferAttachment * materialAtt;
+	FrameBufferAttachment * depthAtt;
+	std::vector<FrameBufferAttachment*> attachmentsPtr;
 
 	VkSemaphore imageReadySemaphore;
 	VkSemaphore drawCompleteSemaphore;
@@ -61,6 +61,8 @@ private:
 	VkPipelineCache pipelineCache;
 
 	VkDebugReportCallbackEXT debugReport;
+	PFN_vkCreateDebugReportCallbackEXT fvkCreateDebugReportCallbackEXT;
+	PFN_vkDestroyDebugReportCallbackEXT fvkDestroyDebugReportCallbackEXT;
 
 	GLFWwindow* window;
 private:
