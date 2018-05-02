@@ -1,19 +1,14 @@
 #pragma once
+#include <vulkan\vulkan.h>
 #include <vector>
-#include <vulkan/vulkan.h>
 
 class VulkanInstance
 {
-private:
 	VkInstance instance;
-	std::vector<const char*> instanceLayers;
-	std::vector<const char*> instanceExtensions;
-public:
-	VulkanInstance();
-	~VulkanInstance();
 
-	bool Init();
-	void AddInstanceLayer(const char * instanceLayerName);
-	void AddInstanceExtension(const char * instanceExtensionName);
-	operator VkInstance() const;
+public:
+	VulkanInstance(std::vector<const char*> desiredExtensions = {}, std::vector<const char*> desiredLayers = {});
+	~VulkanInstance();
+	static std::vector<VkExtensionProperties> GetExtentionProperties();
+	static std::vector<VkLayerProperties> GetLayerProperties();
 };

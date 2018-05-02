@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include "VulkanRenderer.h"
+#include "Model.h"
 
 int main(int argc, char** argv)
 {
@@ -17,16 +18,18 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow* window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
 
-	VulkanRenderer* vulkan = new VulkanRenderer();
-	if (!vulkan->Init(window, true))
+	VulkanRenderer* renderer = new VulkanRenderer();
+	//renderer->Init(window, true);
+
+	//Model* character = new Model("models/Samba Dancing.fbx");
+	//Model* teapot = new Model("models/teapot.obj");
+
+	while(!glfwWindowShouldClose(window))
 	{
-		printf("Error: VulkanRenderer failed to initalize!");
-		system("pause");
-		return 1;
+		glfwPollEvents();
 	}
 
-	delete vulkan;
+	delete renderer;
 	glfwDestroyWindow(window);
-	system("pause");
 	return 0;
 }

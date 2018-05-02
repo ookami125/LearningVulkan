@@ -30,6 +30,7 @@ struct Mesh
 	Vertex* vertices;
 	uint32_t index_count;
 	uint32_t* indices;
+	void* rendererData = nullptr;
 };
 
 struct Model
