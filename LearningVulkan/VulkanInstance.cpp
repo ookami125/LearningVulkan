@@ -65,6 +65,14 @@ VulkanInstance::VulkanInstance(std::vector<const char*> desiredExtensions, std::
 
 VulkanInstance::~VulkanInstance()
 {
+	if (callback != VK_NULL_HANDLE)
+	{
+		auto func = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
+		if (func != nullptr) {
+			func(instance, callback, nullptr);
+		}
+	}
+	if (surface) vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyInstance(instance, nullptr);
 }
 
@@ -86,4 +94,54 @@ std::vector<VkLayerProperties> VulkanInstance::GetLayerProperties()
 	vkEnumerateInstanceLayerProperties(&propertyCount, properties.data());
 	return properties;
 
+}
+
+VkPhysicalDevice VulkanInstance::GetPhysicalSuitableDevice()
+{
+	uint32_t physicalDeviceCount;
+	vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
+	std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
+	vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data());
+	return physicalDevices[0];
+}
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location, int32_t code, const char* layerPrefix, const char* msg, void* userData) {
+	printf("validation layer: %s\n", msg);
+	return VK_FALSE;
+}
+
+void VulkanInstance::setupDebugCallback() {
+
+	VkDebugReportCallbackCreateInfoEXT createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+	createInfo.pfnCallback = debugCallback;
+
+	auto func = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
+	if (func != nullptr) {
+		if (func(instance, &createInfo, nullptr, &callback) != VK_SUCCESS)
+			throw new VulkanException("failed to set up debug callback!", __LINE__, __FILE__);
+	}
+	else {
+		throw new VulkanException("VkDebugReportCallbackCreateInfoEXT doesn't exist!", __LINE__, __FILE__);
+	}
+}
+
+void VulkanInstance::CreateSurface(HWND hwnd)
+{
+	VkWin32SurfaceCreateInfoKHR createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+	createInfo.pNext = nullptr;
+	createInfo.hwnd = hwnd;
+	createInfo.hinstance = GetModuleHandle(nullptr);
+	createInfo.flags = 0;
+
+	auto result = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface);
+	if(result != VK_SUCCESS)
+		throw new VulkanException("failed to create window surface!", __LINE__, __FILE__);
+}
+
+VkSurfaceKHR * VulkanInstance::GetSurface()
+{
+	return &surface;
 }

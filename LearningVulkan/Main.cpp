@@ -1,6 +1,6 @@
-//#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
+#include <GLFW\glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW\glfw3native.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -17,9 +17,9 @@ int main(int argc, char** argv)
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow* window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
+	HWND handle = glfwGetWin32Window(window);
 
-	VulkanRenderer* renderer = new VulkanRenderer();
-	//renderer->Init(window, true);
+	VulkanRenderer* renderer = new VulkanRenderer(handle);
 
 	//Model* character = new Model("models/Samba Dancing.fbx");
 	//Model* teapot = new Model("models/teapot.obj");

@@ -2,12 +2,22 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
+struct QueueFamilyIndices {
+	int graphicsFamily = -1;
+	int presentFamily = -1;
+
+	bool isComplete() {
+		return graphicsFamily >= 0 && presentFamily >= 0;
+	}
+};
+
 class VulkanDevice
 {
-	VkDevice device;
+	VkDevice device = VK_NULL_HANDLE;
+	VkQueue deviceQueue = VK_NULL_HANDLE;
 public:
-	VulkanDevice();
+	VulkanDevice(VkPhysicalDevice * physicalDevice, VkSurfaceKHR * surface, std::vector<const char*> desiredExtensions, std::vector<const char*> desiredLayers);
 	~VulkanDevice();
 
-	std::vector<VkExtensionProperties> GetExtensionProperties;
+	//static std::vector<VkExtensionProperties> GetExtensionProperties();
 };
