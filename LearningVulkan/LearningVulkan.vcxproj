@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="FrameBufferAttachment.cpp" />
     <ClCompile Include="GLMAssimp.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Model.cpp" />
@@ -148,10 +149,13 @@
     <ClCompile Include="VulkanInstance.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
     <ClCompile Include="VulkanRenderpass.cpp" />
+    <ClCompile Include="VulkanSwapchain.cpp" />
+    <ClCompile Include="VulkanUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AssimpUtils.h" />
+    <ClInclude Include="FrameBufferAttachment.h" />
     <ClInclude Include="GLMAssimp.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ResourceManager.h" />
@@ -165,6 +169,7 @@
     <ClInclude Include="VulkanInstance.h" />
     <ClInclude Include="VulkanRenderer.h" />
     <ClInclude Include="VulkanRenderpass.h" />
+    <ClInclude Include="VulkanSwapchain.h" />
     <ClInclude Include="VulkanUtils.h" />
   </ItemGroup>
   <ItemGroup>
