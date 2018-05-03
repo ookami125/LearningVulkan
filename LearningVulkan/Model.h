@@ -28,7 +28,7 @@ struct Mesh
 	Material* mat;
 	uint32_t vertices_count;
 	Vertex* vertices;
-	uint32_t index_count;
+	uint32_t indices_count;
 	uint32_t* indices;
 	void* rendererData = nullptr;
 };

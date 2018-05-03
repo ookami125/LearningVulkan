@@ -21,7 +21,6 @@ int main(int argc, char** argv)
 
 	VulkanRenderer* renderer = new VulkanRenderer(handle);
 
-	//Model* character = new Model("models/Samba Dancing.fbx");
 	//Model* teapot = new Model("models/teapot.obj");
 
 	while(!glfwWindowShouldClose(window))

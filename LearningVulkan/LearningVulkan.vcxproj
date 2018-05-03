@@ -169,6 +169,7 @@
     <ClInclude Include="VulkanException.h" />
     <ClInclude Include="VulkanImage.h" />
     <ClInclude Include="VulkanInstance.h" />
+    <ClInclude Include="VulkanModelData.h" />
     <ClInclude Include="VulkanPipeline.h" />
     <ClInclude Include="VulkanRenderer.h" />
     <ClInclude Include="VulkanRenderPass.h" />

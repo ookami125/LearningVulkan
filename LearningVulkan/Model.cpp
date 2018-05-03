@@ -187,7 +187,7 @@ Model::Model(std::string filepath)
 				}
 				meshP->indices = (uint32_t*)malloc(sizeof(uint32_t) * indices.size());
 				memcpy(meshP->indices, &indices[0], sizeof(uint32_t) * indices.size());
-				meshP->index_count = indices.size();
+				meshP->indices_count = indices.size();
 			}
 
 			if (mesh->HasPositions())

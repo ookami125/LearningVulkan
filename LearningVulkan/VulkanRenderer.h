@@ -16,6 +16,8 @@ class VulkanShaderStage;
 class VulkanPipeline;
 class VulkanRenderPass;
 class VulkanCommandPool;
+struct Model;
+struct Mesh;
 
 class VulkanRenderer
 {
@@ -23,6 +25,7 @@ class VulkanRenderer
 	uint32_t height;
 
 	VulkanInstance* instance;
+	VkPhysicalDevice physicalDevice;
 	VulkanDevice* device;
 	VulkanSwapchain* swapchain;
 	VulkanShaderStage* shaderStage;
@@ -30,11 +33,19 @@ class VulkanRenderer
 	VulkanRenderPass* renderPass;
 	VulkanCommandPool* commandPool;
 
+	VkCommandBuffer* activeCommandBuffer;
+
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
 public:
 	VulkanRenderer(HWND hwnd);
 	~VulkanRenderer();
 
+	void UnregisterMesh(Mesh * mesh);
+	void RegisterMesh(Mesh * mesh);
+	void UnregisterModel(Model * model);
+	void RegisterModel(Model * model);
+	void RenderMesh(Mesh * mesh);
+	void RenderModel(Model * model);
 	void Render();
 };

@@ -8,6 +8,10 @@
 #include "VulkanPipeline.h"
 #include "VulkanRenderPass.h"
 #include "VulkanCommandPool.h"
+#include "VulkanModelData.h"
+#include "VulkanUtils.h"
+#include "Model.h"
+#include "Vertex.h"
 #include <vector>
 
 VulkanRenderer::VulkanRenderer(HWND hwnd)
@@ -17,7 +21,7 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 	width = rect.right - rect.left;
 	height = rect.bottom - rect.top;
 	instance = new VulkanInstance(hwnd, { "VK_KHR_surface", VK_EXT_DEBUG_REPORT_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_EXTENSION_NAME }, { "VK_LAYER_LUNARG_standard_validation" });
-	VkPhysicalDevice physicalDevice = instance->GetPhysicalSuitableDevice({ VK_KHR_SWAPCHAIN_EXTENSION_NAME  });
+	physicalDevice = instance->GetPhysicalSuitableDevice({ VK_KHR_SWAPCHAIN_EXTENSION_NAME  });
 	device = new VulkanDevice(&physicalDevice, instance, { VK_KHR_SWAPCHAIN_EXTENSION_NAME }, { "VK_LAYER_LUNARG_standard_validation" });
 	swapchain = new VulkanSwapchain(&physicalDevice, instance, device, width, height);
 	shaderStage = new VulkanShaderStage(device, { "shaders/shader_base.vert.spv", "shaders/shader_base.frag.spv" });
@@ -26,6 +30,9 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 	swapchain->InitFrameBuffers(renderPass);
 	commandPool = new VulkanCommandPool(&physicalDevice, device, instance);
 	swapchain->InitCommandBuffers(commandPool);
+
+	Model* character = new Model("models/Samba Dancing.fbx");
+	RegisterModel(character);
 
 	VkSemaphoreCreateInfo semaphoreInfo = {};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -60,7 +67,9 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 		vkCmdBeginRenderPass(swapchain->commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(swapchain->commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline);
 
-		vkCmdDraw(swapchain->commandBuffers[i], 3, 1, 0, 0);
+		activeCommandBuffer = &swapchain->commandBuffers[i];
+
+		RenderModel(character);
 
 		vkCmdEndRenderPass(swapchain->commandBuffers[i]);
 
@@ -81,6 +90,88 @@ VulkanRenderer::~VulkanRenderer()
 	delete swapchain;
 	delete device;
 	delete instance;
+}
+
+void VulkanRenderer::UnregisterMesh(Mesh* mesh)
+{
+	vkDestroyBuffer(*device, ((VulkanModelData*)mesh->rendererData)->indexBuffer, nullptr);
+	vkFreeMemory(*device, ((VulkanModelData*)mesh->rendererData)->indexBufferMemory, nullptr);
+	vkDestroyBuffer(*device, ((VulkanModelData*)mesh->rendererData)->vertexBuffer, nullptr);
+	vkFreeMemory(*device, ((VulkanModelData*)mesh->rendererData)->vertexBufferMemory, nullptr);
+	free(mesh->rendererData);
+}
+
+void VulkanRenderer::RegisterMesh(Mesh* mesh)
+{
+	mesh->rendererData = malloc(sizeof(VulkanModelData));
+
+	VulkanModelData& modelData = *((VulkanModelData*)mesh->rendererData);
+	{
+		VkDeviceSize bufferSize = sizeof(mesh->vertices[0]) * mesh->vertices_count;
+
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		createBuffer(device, &physicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+		void* data;
+		vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, mesh->vertices, (size_t)bufferSize);
+		vkUnmapMemory(*device, stagingBufferMemory);
+
+		createBuffer(device, &physicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, modelData.vertexBuffer, modelData.vertexBufferMemory);
+
+		copyBuffer(commandPool, device, stagingBuffer, modelData.vertexBuffer, bufferSize);
+
+		vkDestroyBuffer(*device, stagingBuffer, nullptr);
+		vkFreeMemory(*device, stagingBufferMemory, nullptr);
+	}
+	{
+		VkDeviceSize bufferSize = sizeof(mesh->indices[0]) * mesh->indices_count;
+
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		createBuffer(device, &physicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+		void* data;
+		vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, mesh->indices, (size_t)bufferSize);
+		vkUnmapMemory(*device, stagingBufferMemory);
+
+		createBuffer(device, &physicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, modelData.indexBuffer, modelData.indexBufferMemory);
+
+		copyBuffer(commandPool, device, stagingBuffer, modelData.indexBuffer, bufferSize);
+
+		vkDestroyBuffer(*device, stagingBuffer, nullptr);
+		vkFreeMemory(*device, stagingBufferMemory, nullptr);
+	}
+}
+
+void VulkanRenderer::UnregisterModel(Model* model)
+{
+	for (Mesh* mesh : model->meshes)
+		UnregisterMesh(mesh);
+}
+
+void VulkanRenderer::RegisterModel(Model* model)
+{
+	for (Mesh* mesh : model->meshes)
+		RegisterMesh(mesh);
+}
+
+void VulkanRenderer::RenderMesh(Mesh* mesh)
+{
+	vkCmdBindPipeline(*activeCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline);
+	VkBuffer vertexBuffers[] = { ((VulkanModelData*)mesh->rendererData)->vertexBuffer };
+	VkDeviceSize offsets[] = { 0 };
+	vkCmdBindVertexBuffers(*activeCommandBuffer, 0, 1, vertexBuffers, offsets);
+	vkCmdBindIndexBuffer(*activeCommandBuffer, ((VulkanModelData*)mesh->rendererData)->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(*activeCommandBuffer, static_cast<uint32_t>(mesh->indices_count), 1, 0, 0, 0);
+}
+
+void VulkanRenderer::RenderModel(Model* model)
+{
+	for (Mesh* mesh : model->meshes)
+		RenderMesh(mesh);
 }
 
 void VulkanRenderer::Render()
