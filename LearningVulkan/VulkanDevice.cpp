@@ -1,41 +1,10 @@
 #include "VulkanDevice.h"
 #include "VulkanException.h"
+#include "VulkanInstance.h"
 
-QueueFamilyIndices findQueueFamilies(VkPhysicalDevice* device, VkSurfaceKHR* surface) {
-	QueueFamilyIndices indices;
-
-	uint32_t queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(*device, &queueFamilyCount, nullptr);
-
-	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(*device, &queueFamilyCount, queueFamilies.data());
-
-	int i = 0;
-	for (const auto& queueFamily : queueFamilies) {
-		if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-			indices.graphicsFamily = i;
-		}
-
-		VkBool32 presentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(*device, i, *surface, &presentSupport);
-
-		if (queueFamily.queueCount > 0 && presentSupport) {
-			indices.presentFamily = i;
-		}
-
-		if (indices.isComplete()) {
-			break;
-		}
-
-		i++;
-	}
-
-	return indices;
-}
-
-VulkanDevice::VulkanDevice(VkPhysicalDevice * physicalDevice, VkSurfaceKHR* surface, std::vector<const char*> desiredExtensions, std::vector<const char*> desiredLayers)
+VulkanDevice::VulkanDevice(VkPhysicalDevice * physicalDevice, VulkanInstance* instance, std::vector<const char*> desiredExtensions, std::vector<const char*> desiredLayers)
 {
-	QueueFamilyIndices indices = findQueueFamilies(physicalDevice, surface);
+	QueueFamilyIndices indices = instance->FindQueueFamilies(physicalDevice);
 
 	VkDeviceQueueCreateInfo queueCreateInfo = {};
 	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -63,10 +32,26 @@ VulkanDevice::VulkanDevice(VkPhysicalDevice * physicalDevice, VkSurfaceKHR* surf
 		throw new VulkanException("failed to create logical device!", __LINE__, __FILE__);
 	}
 	
-	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &deviceQueue);
+	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &deviceGraphicsQueue);
+	vkGetDeviceQueue(device, indices.presentFamily, 0, &devicePresentQueue);
 }
 
 VulkanDevice::~VulkanDevice()
 {
 	vkDestroyDevice(device, nullptr);
+}
+
+VkQueue VulkanDevice::GetGraphicsQueue()
+{
+	return deviceGraphicsQueue;
+}
+
+VkQueue VulkanDevice::GetPresentQueue()
+{
+	return devicePresentQueue;
+}
+
+VulkanDevice::operator VkDevice() const
+{
+	return device;
 }

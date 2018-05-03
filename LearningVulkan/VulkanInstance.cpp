@@ -1,8 +1,26 @@
 #include "VulkanInstance.h"
 #include "VulkanException.h"
 #include <vector>
+#include <set>
 
-VulkanInstance::VulkanInstance(std::vector<const char*> desiredExtensions, std::vector<const char*> desiredLayers)
+bool VulkanInstance::CheckDeviceExtensionSupport(VkPhysicalDevice* device, const std::vector<const char*> deviceExtensions)
+{
+	uint32_t extensionCount;
+	vkEnumerateDeviceExtensionProperties(*device, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(*device, nullptr, &extensionCount, availableExtensions.data());
+
+	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+	for (const auto& extension : availableExtensions) {
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
+}
+
+VulkanInstance::VulkanInstance(HWND hwnd, std::vector<const char*> desiredExtensions, std::vector<const char*> desiredLayers)
 {
 	std::vector<const char*> availableDesiredExtensions;
 	std::vector<VkExtensionProperties> availableExtensions = GetExtentionProperties();
@@ -61,6 +79,17 @@ VulkanInstance::VulkanInstance(std::vector<const char*> desiredExtensions, std::
 
 	if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS)
 		throw new VulkanException("Failed to create VkInstance!", __LINE__, __FILE__);
+
+	VkWin32SurfaceCreateInfoKHR createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+	createInfo.pNext = nullptr;
+	createInfo.hwnd = hwnd;
+	createInfo.hinstance = GetModuleHandle(nullptr);
+	createInfo.flags = 0;
+
+	auto result = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface);
+	if (result != VK_SUCCESS)
+		throw new VulkanException("failed to create window surface!", __LINE__, __FILE__);
 }
 
 VulkanInstance::~VulkanInstance()
@@ -96,21 +125,37 @@ std::vector<VkLayerProperties> VulkanInstance::GetLayerProperties()
 
 }
 
-VkPhysicalDevice VulkanInstance::GetPhysicalSuitableDevice()
+VkPhysicalDevice VulkanInstance::GetPhysicalSuitableDevice(const std::vector<const char*> deviceExtensions)
 {
 	uint32_t physicalDeviceCount;
 	vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
 	std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
 	vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data());
-	return physicalDevices[0];
+	for (VkPhysicalDevice device : physicalDevices)
+	{
+		if (!FindQueueFamilies(&device).isComplete())
+			continue;
+
+		if (!CheckDeviceExtensionSupport(&device, deviceExtensions))
+			continue;
+
+		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(&device);
+		if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty())
+			continue;
+
+		return device;
+	}
+	throw new VulkanException("Couldn't find suitable device!", __LINE__, __FILE__);
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location, int32_t code, const char* layerPrefix, const char* msg, void* userData) {
 	printf("validation layer: %s\n", msg);
+	//if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+	//	throw new VulkanException(msg, __LINE__, __FILE__);
 	return VK_FALSE;
 }
 
-void VulkanInstance::setupDebugCallback() {
+void VulkanInstance::SetupDebugCallback() {
 
 	VkDebugReportCallbackCreateInfoEXT createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
@@ -127,19 +172,64 @@ void VulkanInstance::setupDebugCallback() {
 	}
 }
 
-void VulkanInstance::CreateSurface(HWND hwnd)
+QueueFamilyIndices VulkanInstance::FindQueueFamilies(VkPhysicalDevice * device)
 {
-	VkWin32SurfaceCreateInfoKHR createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	createInfo.pNext = nullptr;
-	createInfo.hwnd = hwnd;
-	createInfo.hinstance = GetModuleHandle(nullptr);
-	createInfo.flags = 0;
+	QueueFamilyIndices indices;
 
-	auto result = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface);
-	if(result != VK_SUCCESS)
-		throw new VulkanException("failed to create window surface!", __LINE__, __FILE__);
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(*device, &queueFamilyCount, nullptr);
+
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(*device, &queueFamilyCount, queueFamilies.data());
+
+	int i = 0;
+	for (const auto& queueFamily : queueFamilies) {
+		if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+			indices.graphicsFamily = i;
+		}
+
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(*device, i, surface, &presentSupport);
+
+		if (queueFamily.queueCount > 0) {
+			indices.presentFamily = i;
+		}
+
+		if (indices.isComplete()) {
+			break;
+		}
+
+		i++;
+	}
+
+	return indices;
 }
+
+SwapChainSupportDetails VulkanInstance::QuerySwapChainSupport(VkPhysicalDevice * device)
+{
+	SwapChainSupportDetails details;
+
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(*device, surface, &details.capabilities);
+
+	uint32_t formatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(*device, surface, &formatCount, nullptr);
+
+	if (formatCount != 0) {
+		details.formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(*device, surface, &formatCount, details.formats.data());
+	}
+
+	uint32_t presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(*device, surface, &presentModeCount, nullptr);
+
+	if (presentModeCount != 0) {
+		details.presentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(*device, surface, &presentModeCount, details.presentModes.data());
+	}
+
+	return details;
+}
+
 
 VkSurfaceKHR * VulkanInstance::GetSurface()
 {

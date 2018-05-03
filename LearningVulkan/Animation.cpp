@@ -182,7 +182,7 @@ std::vector<glm::mat4> Animation::GetAnimationFrame(double time)
 	if (time > GetDuration()) //Don't let time go over duration
 		time = fmod(time, GetDuration());
 	std::vector<glm::mat4> mats(bones.size());
-	for (int i=0; i<bones.size(); ++i)
+	for (size_t i=0; i<bones.size(); ++i)
 		mats[i] = bones[i]->GetInterpolatedFrameMatrix(time);
 	return mats;
 }

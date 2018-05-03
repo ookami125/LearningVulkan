@@ -90,6 +90,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>assimp-vc140-mt.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -141,15 +142,23 @@
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Vertex.cpp" />
+    <ClCompile Include="VulkanCommandPool.cpp" />
     <ClCompile Include="VulkanDevice.cpp" />
     <ClCompile Include="VulkanException.cpp" />
+    <ClCompile Include="VulkanImage.cpp" />
     <ClCompile Include="VulkanInstance.cpp" />
+    <ClCompile Include="VulkanPipeline.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
+    <ClCompile Include="VulkanRenderPass.cpp" />
+    <ClCompile Include="VulkanShader.cpp" />
+    <ClCompile Include="VulkanShaderStage.cpp" />
+    <ClCompile Include="VulkanSwapchain.cpp" />
     <ClCompile Include="VulkanUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AssimpUtils.h" />
+    <ClInclude Include="VulkanCommandPool.h" />
     <ClInclude Include="GLMAssimp.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ResourceManager.h" />
@@ -158,8 +167,14 @@
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="VulkanDevice.h" />
     <ClInclude Include="VulkanException.h" />
+    <ClInclude Include="VulkanImage.h" />
     <ClInclude Include="VulkanInstance.h" />
+    <ClInclude Include="VulkanPipeline.h" />
     <ClInclude Include="VulkanRenderer.h" />
+    <ClInclude Include="VulkanRenderPass.h" />
+    <ClInclude Include="VulkanShader.h" />
+    <ClInclude Include="VulkanShaderStage.h" />
+    <ClInclude Include="VulkanSwapchain.h" />
     <ClInclude Include="VulkanUtils.h" />
   </ItemGroup>
   <ItemGroup>

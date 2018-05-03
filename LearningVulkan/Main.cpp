@@ -27,6 +27,7 @@ int main(int argc, char** argv)
 	while(!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+		renderer->Render();
 	}
 
 	delete renderer;
