@@ -21,6 +21,7 @@ VulkanDevice::VulkanDevice(VkPhysicalDevice * physicalDevice, VulkanInstance* in
 	createInfo.queueCreateInfoCount = 1;
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
 	createInfo.pEnabledFeatures = &deviceFeatures;
 
 	createInfo.enabledExtensionCount = desiredExtensions.size();

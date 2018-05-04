@@ -10,7 +10,7 @@
 Model::Model(std::string filepath)
 {
 	Assimp::Importer importer;
-	auto scene = importer.ReadFile(filepath.c_str(), aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs | aiProcess_Triangulate);
+	auto scene = importer.ReadFile(filepath.c_str(), aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_FlipWindingOrder);
 	if (!scene) {
 		throw std::runtime_error(importer.GetErrorString());
 	}

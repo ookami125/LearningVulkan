@@ -3,11 +3,12 @@
 #include "VulkanDevice.h"
 #include "VulkanShaderStage.h"
 #include "VulkanRenderPass.h"
+#include "VulkanDescriptorSetLayout.h"
 #include "VulkanException.h"
 #include "Vertex.h"
 #include <vulkan\vulkan.h>
 
-VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain, VulkanShaderStage* shaderStage, VulkanRenderPass* renderPass) : device(device)
+VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain, VulkanShaderStage* shaderStage, VulkanRenderPass* renderPass, std::vector<VulkanDescriptorSetLayout*> descriptorSets) : device(device)
 {
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -61,6 +62,14 @@ VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain,
 	multisampling.sampleShadingEnable = VK_FALSE;
 	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;
+	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.stencilTestEnable = VK_FALSE;
+
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	colorBlendAttachment.blendEnable = VK_FALSE;
@@ -76,10 +85,14 @@ VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain,
 	colorBlending.blendConstants[2] = 0.0f;
 	colorBlending.blendConstants[3] = 0.0f;
 
+	std::vector<VkDescriptorSet> descriptorSetLayout(descriptorSets.size());
+	for (uint32_t i = 0; i < descriptorSets.size(); ++i)
+		descriptorSetLayout[i] = *descriptorSets[i];
+
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0;
-	pipelineLayoutInfo.pushConstantRangeCount = 0;
+	pipelineLayoutInfo.setLayoutCount = descriptorSetLayout.size();
+	pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
 
 	if (vkCreatePipelineLayout(*device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 		throw new VulkanException("failed to create pipeline layout!", __LINE__, __FILE__);
@@ -95,14 +108,11 @@ VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain,
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = nullptr; // Optional
+	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.pDynamicState = nullptr; // Optional
 	pipelineInfo.layout = pipelineLayout;
 	pipelineInfo.renderPass = *renderPass;
 	pipelineInfo.subpass = 0;
-	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-	pipelineInfo.basePipelineIndex = -1; // Optional
 
 	if (vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
 		throw new VulkanException("failed to create graphics pipeline!", __LINE__, __FILE__);
@@ -113,6 +123,11 @@ VulkanPipeline::~VulkanPipeline()
 {
 	vkDestroyPipeline(*device, pipeline, nullptr);
 	vkDestroyPipelineLayout(*device, pipelineLayout, nullptr);
+}
+
+VkPipelineLayout VulkanPipeline::GetLayout()
+{
+	return pipelineLayout;
 }
 
 VulkanPipeline::operator VkPipeline() const

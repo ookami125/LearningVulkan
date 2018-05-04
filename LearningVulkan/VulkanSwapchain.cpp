@@ -5,8 +5,10 @@
 #include "VulkanImage.h"
 #include "VulkanRenderPass.h"
 #include "VulkanCommandPool.h"
+#include "VulkanUtils.h"
 #include <vulkan\vulkan.h>
 #include <algorithm>
+#include <array>
 
 VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
@@ -110,6 +112,9 @@ VulkanSwapchain::VulkanSwapchain(VkPhysicalDevice* physicalDevice, VulkanInstanc
 	vkGetSwapchainImagesKHR(*logicalDevice, swapchain, &imageCount, images.data());	
 	swapChainImages.resize(imageCount);
 
+	swapChainDepthImageFormat = FindDepthFormat(physicalDevice);
+	depthImage = new VulkanImage(device, physicalDevice, width, height, swapChainDepthImageFormat, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
 	for (uint32_t i=0; i<imageCount; ++i)
 	{
 		VkImageViewCreateInfo createInfo = {};
@@ -144,6 +149,7 @@ VulkanSwapchain::~VulkanSwapchain()
 	for (auto framebuffer : swapChainFramebuffers) {
 		vkDestroyFramebuffer(*device, framebuffer, nullptr);
 	}
+	delete depthImage;
 	for (VulkanImage* image : swapChainImages)
 	{
 		delete image;
@@ -157,15 +163,16 @@ void VulkanSwapchain::InitFrameBuffers(VulkanRenderPass* renderpass)
 {
 	swapChainFramebuffers.resize(swapChainImages.size());
 	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		VkImageView attachments[] = {
-			swapChainImages[i]->GetImageView()
+		std::array<VkImageView, 2> attachments = {
+			swapChainImages[i]->GetImageView(),
+			depthImage->GetImageView()
 		};
 
 		VkFramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = *renderpass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
 		framebufferInfo.width = swapChainExtent.width;
 		framebufferInfo.height = swapChainExtent.height;
 		framebufferInfo.layers = 1;
@@ -178,6 +185,7 @@ void VulkanSwapchain::InitFrameBuffers(VulkanRenderPass* renderpass)
 
 void VulkanSwapchain::InitCommandBuffers(VulkanCommandPool * commandPool)
 {
+
 	commandBuffers.resize(swapChainFramebuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
@@ -189,6 +197,35 @@ void VulkanSwapchain::InitCommandBuffers(VulkanCommandPool * commandPool)
 	if (vkAllocateCommandBuffers(*device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
 		throw new VulkanException("failed to allocate command buffers!", __LINE__, __FILE__);
 	}
+
+	depthImage->TransitionImageLayout(commandPool, swapChainDepthImageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+}
+
+VkFormat VulkanSwapchain::GetImageFormat()
+{
+	return swapChainImageFormat;
+}
+
+void VulkanSwapchain::NextFrame()
+{
+	frameCounter = frameCounter + 1;
+	if (frameCounter >= commandBuffers.size())
+		frameCounter = 0;
+}
+
+VkCommandBuffer VulkanSwapchain::GetNextCommandBuffer()
+{
+	return commandBuffers[frameCounter];
+}
+
+VkFramebuffer VulkanSwapchain::GetNextFrameBuffer()
+{
+	return swapChainFramebuffers[frameCounter];
+}
+
+VulkanImage* VulkanSwapchain::GetImage(uint32_t idx)
+{
+	return swapChainImages[idx];
 }
 
 VkExtent2D VulkanSwapchain::GetExtent()

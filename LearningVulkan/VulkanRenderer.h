@@ -16,8 +16,19 @@ class VulkanShaderStage;
 class VulkanPipeline;
 class VulkanRenderPass;
 class VulkanCommandPool;
+class VulkanUniformBufferObject;
+class VulkanDescriptorSetLayout;
+class VulkanDescriptorPool;
+class VulkanImageSampler;
 struct Model;
 struct Mesh;
+struct Texture;
+
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
 
 class VulkanRenderer
 {
@@ -33,7 +44,17 @@ class VulkanRenderer
 	VulkanRenderPass* renderPass;
 	VulkanCommandPool* commandPool;
 
-	VkCommandBuffer* activeCommandBuffer;
+	VkCommandBuffer activeCommandBuffer;
+
+	VulkanDescriptorSetLayout* descriptorSetLayout;
+
+	VulkanDescriptorPool* descriptorPool;
+	VkDescriptorSet descriptorSet;
+
+	UniformBufferObject* ubo;
+	VulkanUniformBufferObject* vubo;
+
+	VulkanImageSampler* imageSmapler;
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
@@ -41,11 +62,21 @@ public:
 	VulkanRenderer(HWND hwnd);
 	~VulkanRenderer();
 
+	void AllocShit(Texture* texture);
+
 	void UnregisterMesh(Mesh * mesh);
 	void RegisterMesh(Mesh * mesh);
+
 	void UnregisterModel(Model * model);
 	void RegisterModel(Model * model);
+
+	void UnregisterTexture(Texture * texture);
+	void RegisterTexture(Texture * texture);
+
 	void RenderMesh(Mesh * mesh);
 	void RenderModel(Model * model);
-	void Render();
+
+	void StartRender();
+	void EndRender();
+	void Present();
 };

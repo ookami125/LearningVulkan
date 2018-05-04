@@ -143,9 +143,12 @@
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="VulkanCommandPool.cpp" />
+    <ClCompile Include="VulkanDescriptorPool.cpp" />
+    <ClCompile Include="VulkanDescriptorSetLayout.cpp" />
     <ClCompile Include="VulkanDevice.cpp" />
     <ClCompile Include="VulkanException.cpp" />
     <ClCompile Include="VulkanImage.cpp" />
+    <ClCompile Include="VulkanImageSampler.cpp" />
     <ClCompile Include="VulkanInstance.cpp" />
     <ClCompile Include="VulkanPipeline.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
@@ -153,11 +156,14 @@
     <ClCompile Include="VulkanShader.cpp" />
     <ClCompile Include="VulkanShaderStage.cpp" />
     <ClCompile Include="VulkanSwapchain.cpp" />
+    <ClCompile Include="VulkanUniformBufferObject.cpp" />
     <ClCompile Include="VulkanUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AssimpUtils.h" />
+    <ClInclude Include="VulkanImageSampler.h" />
+    <ClInclude Include="VulkanTextureData.h" />
     <ClInclude Include="VulkanCommandPool.h" />
     <ClInclude Include="GLMAssimp.h" />
     <ClInclude Include="Model.h" />
@@ -165,6 +171,8 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Vertex.h" />
+    <ClInclude Include="VulkanDescriptorPool.h" />
+    <ClInclude Include="VulkanDescriptorSetLayout.h" />
     <ClInclude Include="VulkanDevice.h" />
     <ClInclude Include="VulkanException.h" />
     <ClInclude Include="VulkanImage.h" />
@@ -176,6 +184,7 @@
     <ClInclude Include="VulkanShader.h" />
     <ClInclude Include="VulkanShaderStage.h" />
     <ClInclude Include="VulkanSwapchain.h" />
+    <ClInclude Include="VulkanUniformBufferObject.h" />
     <ClInclude Include="VulkanUtils.h" />
   </ItemGroup>
   <ItemGroup>

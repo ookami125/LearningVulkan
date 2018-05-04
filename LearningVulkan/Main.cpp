@@ -21,13 +21,22 @@ int main(int argc, char** argv)
 
 	VulkanRenderer* renderer = new VulkanRenderer(handle);
 
-	//Model* teapot = new Model("models/teapot.obj");
+	Model* character = new Model("models/Samba Dancing.fbx");
+	renderer->RegisterModel(character);
+
+	renderer->AllocShit(character->textures[0]);
 
 	while(!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
-		renderer->Render();
+		renderer->StartRender();
+		renderer->RenderModel(character);
+		renderer->EndRender();
+		renderer->Present();
 	}
+
+	renderer->UnregisterModel(character);
+	delete character;
 
 	delete renderer;
 	glfwDestroyWindow(window);

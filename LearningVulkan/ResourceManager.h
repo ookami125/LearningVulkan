@@ -2,7 +2,7 @@
 #include <string>
 #include <assimp/texture.h>
 
-class Texture;
+struct Texture;
 
 class ResourceManager
 {

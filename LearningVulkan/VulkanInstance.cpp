@@ -139,6 +139,11 @@ VkPhysicalDevice VulkanInstance::GetPhysicalSuitableDevice(const std::vector<con
 		if (!CheckDeviceExtensionSupport(&device, deviceExtensions))
 			continue;
 
+		VkPhysicalDeviceFeatures supportedFeatures;
+		vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+		if (!supportedFeatures.samplerAnisotropy)
+			continue;
+
 		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(&device);
 		if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty())
 			continue;

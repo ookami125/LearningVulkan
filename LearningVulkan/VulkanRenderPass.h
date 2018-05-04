@@ -11,7 +11,7 @@ class VulkanRenderPass
 	VkRenderPass renderPass;
 
 public:
-	VulkanRenderPass(VulkanDevice* device, VulkanSwapchain* swapchain);
+	VulkanRenderPass(VkPhysicalDevice* physicalDevice, VulkanDevice* device, VulkanSwapchain* swapchain);
 	~VulkanRenderPass();
 
 	operator VkRenderPass() const;

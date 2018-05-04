@@ -2,7 +2,7 @@
 #include <vector>
 #include <glm\glm.hpp>
 
-class Texture;
+struct Texture;
 struct Vertex;
 class Animation;
 
