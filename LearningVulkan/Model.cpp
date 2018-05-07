@@ -2,6 +2,9 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm\gtx\component_wise.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "GLMAssimp.h"
 #include "Vertex.h"
 #include "ResourceManager.h"
@@ -117,49 +120,49 @@ Model::Model(std::string filepath)
 		for (int i = 0; i < numAnimations; i++)
 		{
 			auto animation = scene->mAnimations[i];
-			aiString name = animation->mName;
-			Animation* anim = new Animation(name.C_Str());
-			anim->SetDuration(animation->mDuration);
-			printf("  %s\n", name.C_Str());
-			
-			int numChannels = animation->mNumChannels;
-			for (int i = 0; i < numChannels; ++i)
-			{
-				auto channel = animation->mChannels[i];
-				Bone* bone = new Bone(channel->mNodeName.C_Str());
-				//printf("    node name: %s\n", channel->mNodeName.C_Str());
-
-				int numPositionKeys = channel->mNumPositionKeys;
-				for (int j = 0; j < numPositionKeys; ++j)
-				{
-					auto positionKey = channel->mPositionKeys[j];
-					glm::vec3 pos = vec3(positionKey.mValue);
-					bone->AddPositionKey(positionKey.mTime, pos);
-					//printf("      %f - {%f,%f,%f}\n", positionKey.mTime, pos.x, pos.y, pos.z);
-				}
-
-				int numRotationKeys = channel->mNumRotationKeys;
-				for (int j = 0; j < numRotationKeys; ++j)
-				{
-					auto rotationKey = channel->mRotationKeys[j];
-					glm::fquat rot = fquat(rotationKey.mValue);
-					bone->AddRotationKey(rotationKey.mTime, rot);
-					//printf("      %f - {%f,%f,%f,%f}\n", rotationKey.mTime, rot.x, rot.y, rot.z, rot.w);
-				}
-
-				int numScalingKeys = channel->mNumScalingKeys;
-				for (int j = 0; j < numScalingKeys; ++j)
-				{
-					auto scalingKey = channel->mScalingKeys[j];
-					glm::vec3 scale = vec3(scalingKey.mValue);
-					bone->AddScalingKey(scalingKey.mTime, scale);
-					//printf("      %f - {%f,%f,%f}\n", scalingKey.mTime, scale.x, scale.y, scale.z);
-				}
-
-				anim->AddBone(bone, 0);
-			}
-
-			anim->Compile();
+			Animation* anim = new Animation(animation, scene);
+			//anim->SetDuration(animation->mDuration);
+			//printf("  %s\n", name.C_Str());
+			//
+			//int numChannels = animation->mNumChannels;
+			//for (int j = 0; j < numChannels; ++j)
+			//{
+			//	auto channel = animation->mChannels[j];
+			//	Bone* bone = new Bone(channel->mNodeName.C_Str());
+			//	//printf("    node name: %s\n", channel->mNodeName.C_Str());
+			//
+			//	int numPositionKeys = channel->mNumPositionKeys;
+			//	for (int k = 0; k < numPositionKeys; ++k)
+			//	{
+			//		auto positionKey = channel->mPositionKeys[k];
+			//		glm::vec3 pos = vec3(positionKey.mValue);
+			//		bone->AddPositionKey(positionKey.mTime, pos);
+			//		//printf("      %f - {%f,%f,%f}\n", positionKey.mTime, pos.x, pos.y, pos.z);
+			//	}
+			//
+			//	int numRotationKeys = channel->mNumRotationKeys;
+			//	for (int k = 0; k < numRotationKeys; ++k)
+			//	{
+			//		auto rotationKey = channel->mRotationKeys[k];
+			//		glm::fquat rot = fquat(rotationKey.mValue);
+			//		bone->AddRotationKey(rotationKey.mTime, rot);
+			//		//printf("      %f - {%f,%f,%f,%f}\n", rotationKey.mTime, rot.x, rot.y, rot.z, rot.w);
+			//	}
+			//
+			//	int numScalingKeys = channel->mNumScalingKeys;
+			//	for (int k = 0; k < numScalingKeys; ++k)
+			//	{
+			//		auto scalingKey = channel->mScalingKeys[k];
+			//		glm::vec3 scale = vec3(scalingKey.mValue);
+			//		bone->AddScalingKey(scalingKey.mTime, scale);
+			//		//printf("      %f - {%f,%f,%f}\n", scalingKey.mTime, scale.x, scale.y, scale.z);
+			//	}
+			//
+			//	aiString parentBone = scene->mRootNode->FindNode(channel->mNodeName)->mParent->mName;
+			//	anim->AddBone(bone, parentBone.C_Str());
+			//}
+			//
+			//anim->Compile();
 			animations.push_back(anim);
 		}
 	}
@@ -198,18 +201,62 @@ Model::Model(std::string filepath)
 				{
 					Vertex Vert;
 					Vert.pos = vec3(mesh->mVertices[j]);
-					Vert.color = (mesh->HasVertexColors(0)) ? (glm::vec3)vec4(mesh->mColors[0][j]) : glm::vec3{ rand() / 65525.0f, rand() / 65525.0f, rand() / 65525.0f };
+					Vert.color = (mesh->HasVertexColors(0)) ? (glm::vec3)vec4(mesh->mColors[0][j]) : glm::vec3(1);
 					Vert.texCoord = (mesh->HasTextureCoords(0)) ? (glm::vec2)vec3(mesh->mTextureCoords[0][j]) : glm::vec2{ 0, 0 };
-					//Vert.normal	= (mesh->HasNormals())				 ? (glm::vec3)vec3(mesh->mNormals[j])			: glm::vec3{ 0, 0, 0 };
-					//Vert.tangent	= (mesh->HasTangentsAndBitangents()) ? (glm::vec3)vec3(mesh->mTangents[j])			: glm::vec3{ 0, 0, 0 };
-					//Vert.biTangent	= (mesh->HasTangentsAndBitangents()) ? (glm::vec3)vec3(mesh->mBitangents[j])		: glm::vec3{ 0, 0, 0 };
+					Vert.bonesIdx = glm::uvec4(0);
+					Vert.bonesWeights = glm::vec4(0);
 					vertices.push_back(Vert);
 				}
 				meshP->vertices = (Vertex*)malloc(sizeof(Vertex) * vertices.size());
 				memcpy(meshP->vertices, &vertices[0], sizeof(Vertex) * vertices.size());
 				meshP->vertices_count = vertices.size();
 			}
+
+			if (mesh->HasBones())
+			{
+				meshP->boneOffsets = (glm::mat4*)malloc(sizeof(glm::mat4) * mesh->mNumBones);
+				for (uint32_t j = 0; j < mesh->mNumBones; ++j)
+				{
+					auto bone = mesh->mBones[j];
+
+					meshP->boneOffsets[j] = glm::transpose(glm::make_mat4(&bone->mOffsetMatrix.a1));
+					for (uint32_t k = 0; k < bone->mNumWeights; ++k)
+					{
+						auto weight = bone->mWeights[k];
+
+						uint32_t boneIdx = j;
+						float boneWeight = weight.mWeight;
+						//printf("%d\n", weight.mVertexId);
+						Vertex& vertex = meshP->vertices[weight.mVertexId];
+						for (int l = 0; l < 4; ++l)
+						{
+							if (vertex.bonesWeights[l] < weight.mWeight)
+							{
+								std::swap(vertex.bonesIdx[l], boneIdx);
+								std::swap(vertex.bonesWeights[l], boneWeight);
+							}
+						}
+					}
+				}
+
+				for (uint32_t j = 0; j < meshP->vertices_count; ++j)
+				{
+					float total = glm::compAdd(meshP->vertices[j].bonesWeights);
+					meshP->vertices[j].bonesWeights *= glm::vec4(1.0f / total);
+				}
+			}
 			meshes.push_back(meshP);
 		}
 	}
+}
+
+std::vector<glm::mat4> Model::GetAnimationFrame(int animationID, int meshID, double time)
+{
+	//auto animation = animations[animationID];
+	//std::vector<glm::mat4> frame = animation->GetAnimationFrame(time);
+	//for (int i = 0; i < frame.size(); ++i)
+	//{
+	//	frame[0] = frame[0] * meshes[meshID]->boneOffsets[i];
+	//}
+	return animations[animationID]->GetAnimationFrame(time);
 }

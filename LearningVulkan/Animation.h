@@ -1,86 +1,50 @@
 #pragma once
 #include <map>
 #include <vector>
+#include <set>
 #include <unordered_set>
 #include <glm\glm.hpp>
 #include <glm\gtc\quaternion.hpp>
+#include <assimp\anim.h>
+#include <assimp\scene.h>
 
-enum FrameData
+enum KeyFrameBitTypes
 {
-	PositionFrame = 1,
-	RotationFrame = 2,
-	ScalingFrame = 4,
+	KeyFrame_Translate = 1,
+	KeyFrame_Rotate = 2,
+	KeyFrame_Scale = 4,
 };
 
-struct Frame
+struct KeyFrame
 {
-	double time;
-	Frame* next = nullptr;
-	Frame* prev = nullptr;
-
-	FrameData frameData;
-
-	glm::vec3 position;
-	glm::fquat rotation;
+	uint8_t type;
+	glm::vec3 translate;
+	glm::fquat rotate;
 	glm::vec3 scale;
-
-	glm::mat4 matrix;
+	glm::mat4 getMatrix();
 };
-
-class Animation;
 
 class Bone
 {
 	std::string name;
-	std::map<double, Frame*> frames;
-	std::vector<double> times;
-	Animation* parentAnimation;
-
-	//After Compile Varialbles
-	Frame* firstFrame;
-	Frame* lastFrame;
-
-private:
-	Frame* GetOrNewFrame(double time);
-	double GetDuration();
-
+	uint32_t id;
+	Bone* parent = nullptr;
+	std::map<double, KeyFrame> keyFrames;
+	KeyFrame * GetOrCreateKeyFrame(double time);
 public:
-	Bone(std::string name);
+	Bone(aiNodeAnim* node, uint32_t id, Bone* parent);
 
-	void SetParentAnimation(Animation* animation);
+	inline uint32_t GetID();
+	inline Bone* GetParent();
 
-	void AddPositionKey(double time, glm::vec3 position);
-	void AddRotationKey(double time, glm::fquat rotation);
-	void AddScalingKey(double time, glm::vec3 scale);
-
-	std::string GetName();
-
-	void Compile();
-
-	//After Compile Functions
-	Frame* GetFrameBeforeTime(double time);
-	glm::mat4 GetInterpolatedFrameMatrix(double time);
-	glm::mat4 GetInterpolatedFrameMatrixGlobal(double time);
+	glm::mat4 GetMatrix(double time);
 };
 
 class Animation
 {
-	std::string name;
-	std::unordered_set<std::string> boneNames;
 	std::vector<Bone*> bones;
-	std::vector<int> boneParent;
-	double duration;
-
 public:
-	Animation(std::string name);
-
-	void SetDuration(double time);
-	void AddBone(Bone* bone, int parentIdx);
-	
-
-	double GetDuration();
-
-	void Compile();
+	Animation(const aiAnimation* animation, const aiScene* scene);
 
 	std::vector<glm::mat4> GetAnimationFrame(double time);
 };

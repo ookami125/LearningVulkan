@@ -12,7 +12,7 @@ VulkanDescriptorPool::VulkanDescriptorPool(VulkanDevice* device) : device(device
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 1;
+	poolSizes[0].descriptorCount = 3;
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	poolSizes[1].descriptorCount = 1;
 
@@ -32,27 +32,7 @@ VulkanDescriptorPool::~VulkanDescriptorPool()
 	vkDestroyDescriptorPool(*device, descriptorPool, nullptr);
 }
 
-//std::vector<VkDescriptorSet> VulkanDescriptorPool::AllocateDescriptorSets(std::vector<VulkanDescriptorSetLayout*> descriptorSetLayouts)
-//{
-//	std::vector<VkDescriptorSetLayout> descriptorSetLayout(descriptorSetLayouts.size());
-//	for (uint32_t i = 0; i < descriptorSetLayouts.size(); ++i)
-//		descriptorSetLayout[i] = *descriptorSetLayouts[i];
-//
-//	VkDescriptorSetAllocateInfo allocInfo = {};
-//	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-//	allocInfo.descriptorPool = descriptorPool;
-//	allocInfo.descriptorSetCount = descriptorSetLayout.size();
-//	allocInfo.pSetLayouts = descriptorSetLayout.data();
-//
-//	std::vector<VkDescriptorSet> descriptorSets(descriptorSetLayouts.size());
-//	if (vkAllocateDescriptorSets(*device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-//		throw std::runtime_error("failed to allocate descriptor set!");
-//	}
-//
-//	return descriptorSets;
-//}
-
-VkDescriptorSet VulkanDescriptorPool::AllocateDescriptorSet(VulkanDescriptorSetLayout* descriptorSetLayout, VulkanUniformBufferObject* uniformBufferObject, Texture* texture)
+VkDescriptorSet VulkanDescriptorPool::AllocateDescriptorSet(VulkanDescriptorSetLayout* descriptorSetLayout)
 {
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -65,35 +45,45 @@ VkDescriptorSet VulkanDescriptorPool::AllocateDescriptorSet(VulkanDescriptorSetL
 		throw std::runtime_error("failed to allocate descriptor set!");
 	}
 
+	return descriptorSet;
+}
+
+void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, VulkanUniformBufferObject* uniformBufferObject)
+{
 	VkDescriptorBufferInfo bufferInfo = {};
 	bufferInfo.buffer = uniformBufferObject->GetBuffer();
 	bufferInfo.offset = 0;
 	bufferInfo.range = uniformBufferObject->GetBufferSize();
 
+	VkWriteDescriptorSet descriptorWrites = {};
+	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites.dstSet = descriptorSet;
+	descriptorWrites.dstBinding = binding;
+	descriptorWrites.dstArrayElement = 0;
+	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites.descriptorCount = 1;
+	descriptorWrites.pBufferInfo = &bufferInfo;
+
+	vkUpdateDescriptorSets(*device, 1, &descriptorWrites, 0, nullptr);
+
+}
+
+void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, Texture* texture)
+{
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfo.imageView = ((VulkanTextureData*)texture->rendererData)->image->GetImageView();
 	imageInfo.sampler = *((VulkanTextureData*)texture->rendererData)->sampler;
 
-	std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
+	VkWriteDescriptorSet descriptorWrites = {};
+	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites.dstSet = descriptorSet;
+	descriptorWrites.dstBinding = binding;
+	descriptorWrites.dstArrayElement = 0;
+	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrites.descriptorCount = 1;
+	descriptorWrites.pImageInfo = &imageInfo;
 
-	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[0].dstSet = descriptorSet;
-	descriptorWrites[0].dstBinding = 0;
-	descriptorWrites[0].dstArrayElement = 0;
-	descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrites[0].descriptorCount = 1;
-	descriptorWrites[0].pBufferInfo = &bufferInfo;
+	vkUpdateDescriptorSets(*device, 1, &descriptorWrites, 0, nullptr);
 
-	descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[1].dstSet = descriptorSet;
-	descriptorWrites[1].dstBinding = 1;
-	descriptorWrites[1].dstArrayElement = 0;
-	descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[1].descriptorCount = 1;
-	descriptorWrites[1].pImageInfo = &imageInfo;
-
-	vkUpdateDescriptorSets(*device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-
-	return descriptorSet;
 }

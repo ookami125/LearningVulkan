@@ -16,6 +16,7 @@ public:
 	VulkanDescriptorPool(VulkanDevice* device);
 	~VulkanDescriptorPool();
 
-	//std::vector<VkDescriptorSet> AllocateDescriptorSets(std::vector<VulkanDescriptorSetLayout*> descriptorSetLayouts = {});
-	VkDescriptorSet AllocateDescriptorSet(VulkanDescriptorSetLayout* descriptorSetLayout, VulkanUniformBufferObject* uniformBufferObject, Texture* texture);
+	VkDescriptorSet AllocateDescriptorSet(VulkanDescriptorSetLayout * descriptorSetLayout);
+	void UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, VulkanUniformBufferObject * uniformBufferObject);
+	void UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, Texture * texture);
 };

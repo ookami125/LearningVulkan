@@ -30,6 +30,7 @@ struct Mesh
 	Vertex* vertices;
 	uint32_t indices_count;
 	uint32_t* indices;
+	glm::mat4* boneOffsets;
 	void* rendererData = nullptr;
 };
 
@@ -39,7 +40,10 @@ struct Model
 	std::vector<Material*> materials;
 	std::vector<Mesh*> meshes;
 	std::vector<Animation*> animations;
+	void* rendererData;
 
 public:
 	Model(std::string filepath);
+
+	std::vector<glm::mat4> GetAnimationFrame(int animationID, int meshID, double time);
 };

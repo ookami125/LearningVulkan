@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 	Model* character = new Model("models/Samba Dancing.fbx");
 	renderer->RegisterModel(character);
 
-	renderer->AllocShit(character->textures[0]);
+	//renderer->AllocShit(character->textures[0]);
 
 	while(!glfwWindowShouldClose(window))
 	{
