@@ -2,6 +2,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm\gtx\component_wise.hpp>
 #include "GLMAssimp.h"
 #include "Vertex.h"
 #include "ResourceManager.h"
@@ -121,7 +123,7 @@ Model::Model(std::string filepath)
 			Animation* anim = new Animation(name.C_Str());
 			anim->SetDuration(animation->mDuration);
 			printf("  %s\n", name.C_Str());
-			
+
 			int numChannels = animation->mNumChannels;
 			for (int i = 0; i < numChannels; ++i)
 			{
@@ -198,16 +200,46 @@ Model::Model(std::string filepath)
 				{
 					Vertex Vert;
 					Vert.pos = vec3(mesh->mVertices[j]);
-					Vert.color = (mesh->HasVertexColors(0)) ? (glm::vec3)vec4(mesh->mColors[0][j]) : glm::vec3{ rand() / 65525.0f, rand() / 65525.0f, rand() / 65525.0f };
+					Vert.color = (mesh->HasVertexColors(0)) ? (glm::vec3)vec4(mesh->mColors[0][j]) : glm::vec3(1);
 					Vert.texCoord = (mesh->HasTextureCoords(0)) ? (glm::vec2)vec3(mesh->mTextureCoords[0][j]) : glm::vec2{ 0, 0 };
-					//Vert.normal	= (mesh->HasNormals())				 ? (glm::vec3)vec3(mesh->mNormals[j])			: glm::vec3{ 0, 0, 0 };
-					//Vert.tangent	= (mesh->HasTangentsAndBitangents()) ? (glm::vec3)vec3(mesh->mTangents[j])			: glm::vec3{ 0, 0, 0 };
-					//Vert.biTangent	= (mesh->HasTangentsAndBitangents()) ? (glm::vec3)vec3(mesh->mBitangents[j])		: glm::vec3{ 0, 0, 0 };
+					Vert.bonesIdx = glm::uvec4(0);
+					Vert.bonesWeights = glm::vec4(0);
 					vertices.push_back(Vert);
 				}
 				meshP->vertices = (Vertex*)malloc(sizeof(Vertex) * vertices.size());
 				memcpy(meshP->vertices, &vertices[0], sizeof(Vertex) * vertices.size());
 				meshP->vertices_count = vertices.size();
+			}
+
+			if (mesh->HasBones())
+			{
+				for (uint32_t j = 0; j < mesh->mNumBones; ++j)
+				{
+					auto bone = mesh->mBones[j];
+					for (uint32_t k = 0; k < bone->mNumWeights; ++k)
+					{
+						auto weight = bone->mWeights[k];
+
+						uint32_t boneIdx = j;
+						float boneWeight = weight.mWeight;
+						//printf("%d\n", weight.mVertexId);
+						Vertex& vertex = meshP->vertices[weight.mVertexId];
+						for (int l = 0; l < 4; ++l)
+						{
+							if (vertex.bonesWeights[l] < weight.mWeight)
+							{
+								std::swap(vertex.bonesIdx[l], boneIdx);
+								std::swap(vertex.bonesWeights[l], boneWeight);
+							}
+						}
+					}
+				}
+
+				for (uint32_t j = 0; j < meshP->vertices_count; ++j)
+				{
+					float total = glm::compAdd(meshP->vertices[j].bonesWeights);
+					meshP->vertices[j].bonesWeights *= glm::vec4(1.0f / total);
+				}
 			}
 			meshes.push_back(meshP);
 		}

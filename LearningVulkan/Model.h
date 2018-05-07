@@ -39,6 +39,7 @@ struct Model
 	std::vector<Material*> materials;
 	std::vector<Mesh*> meshes;
 	std::vector<Animation*> animations;
+	void* rendererData;
 
 public:
 	Model(std::string filepath);

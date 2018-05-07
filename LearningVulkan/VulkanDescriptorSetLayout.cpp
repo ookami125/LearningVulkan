@@ -2,24 +2,40 @@
 #include "VulkanDevice.h"
 #include <array>
 
-VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VulkanDevice* device) : device(device)
+VkDescriptorSetLayoutBinding VulkanDescriptorSetLayout::Type2Binding(VulkanDescriptorSetLayoutType type, VulkanDescriptorSetLayoutStage stage, uint32_t count)
 {
-	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+	VkDescriptorSetLayoutBinding layoutBinding = {};
+	layoutBinding.binding = count;
+	switch (type)
+	{
+	case VulkanDescriptorSetLayoutType::DSLT_Buffer:
+		layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		break;
+	case VulkanDescriptorSetLayoutType::DSLT_Sampler:
+		layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		break;
+	}
+	layoutBinding.descriptorCount = 1;
+	switch (type)
+	{
+	case VulkanDescriptorSetLayoutStage::DSLS_Vertex:
+		layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		break;
+	case VulkanDescriptorSetLayoutStage::DSLS_Fragment:
+		layoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		break;
+	}
 
-	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	return layoutBinding;
+}
 
-
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VulkanDevice* device, std::vector<std::pair<VulkanDescriptorSetLayoutType, VulkanDescriptorSetLayoutStage>> types) : device(device)
+{
+	std::vector<VkDescriptorSetLayoutBinding> bindings;
+	int i = 0;
+	for (auto type : types)
+		bindings.push_back(Type2Binding(type.first, type.second, i++));
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());

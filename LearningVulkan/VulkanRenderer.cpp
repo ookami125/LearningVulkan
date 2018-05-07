@@ -34,11 +34,12 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 	swapchain = new VulkanSwapchain(&physicalDevice, instance, device, width, height);
 	shaderStage = new VulkanShaderStage(device, { "shaders/shader_base.vert.spv", "shaders/shader_base.frag.spv" });
 	renderPass = new VulkanRenderPass(&physicalDevice, device, swapchain);
-	descriptorSetLayout = new VulkanDescriptorSetLayout(device);
-	pipeline = new VulkanPipeline(device, swapchain, shaderStage, renderPass, { descriptorSetLayout });
+	viewProjDescriptorSetLayout = new VulkanDescriptorSetLayout(device, { { DSLT_Buffer, DSLS_Vertex },{ DSLT_Sampler, DSLS_Fragment } });
+	//modelDescriptorSetLayout = new VulkanDescriptorSetLayout(device, { { DSLT_Buffer, DSLS_Vertex },{ DSLT_Sampler, DSLS_Fragment } });
+	pipeline = new VulkanPipeline(device, swapchain, shaderStage, renderPass, { viewProjDescriptorSetLayout });
 
-	ubo = new UniformBufferObject();
-	vubo = new VulkanUniformBufferObject(device, &physicalDevice, sizeof(UniformBufferObject), ubo);
+	ubo = new UBO_ViewProj();
+	vubo = new VulkanUniformBufferObject(device, &physicalDevice, sizeof(UBO_ViewProj), ubo);
 
 	descriptorPool = new VulkanDescriptorPool(device);
 
@@ -65,7 +66,7 @@ VulkanRenderer::~VulkanRenderer()
 	delete vubo;
 	delete ubo;
 	delete pipeline;
-	delete descriptorSetLayout;
+	delete viewProjDescriptorSetLayout;
 	delete renderPass;
 	delete shaderStage;
 	delete swapchain;
@@ -73,25 +74,20 @@ VulkanRenderer::~VulkanRenderer()
 	delete instance;
 }
 
-void VulkanRenderer::AllocShit(Texture* texture)
-{
-	descriptorSet = descriptorPool->AllocateDescriptorSet(descriptorSetLayout, vubo, texture);
-}
-
 void VulkanRenderer::UnregisterMesh(Mesh* mesh)
 {
-	vkDestroyBuffer(*device, ((VulkanModelData*)mesh->rendererData)->indexBuffer, nullptr);
-	vkFreeMemory(*device, ((VulkanModelData*)mesh->rendererData)->indexBufferMemory, nullptr);
-	vkDestroyBuffer(*device, ((VulkanModelData*)mesh->rendererData)->vertexBuffer, nullptr);
-	vkFreeMemory(*device, ((VulkanModelData*)mesh->rendererData)->vertexBufferMemory, nullptr);
+	vkDestroyBuffer(*device, ((VulkanMeshData*)mesh->rendererData)->indexBuffer, nullptr);
+	vkFreeMemory(*device, ((VulkanMeshData*)mesh->rendererData)->indexBufferMemory, nullptr);
+	vkDestroyBuffer(*device, ((VulkanMeshData*)mesh->rendererData)->vertexBuffer, nullptr);
+	vkFreeMemory(*device, ((VulkanMeshData*)mesh->rendererData)->vertexBufferMemory, nullptr);
 	free(mesh->rendererData);
 }
 
 void VulkanRenderer::RegisterMesh(Mesh* mesh)
 {
-	mesh->rendererData = malloc(sizeof(VulkanModelData));
+	mesh->rendererData = malloc(sizeof(VulkanMeshData));
 
-	VulkanModelData& modelData = *((VulkanModelData*)mesh->rendererData);
+	VulkanMeshData& modelData = *((VulkanMeshData*)mesh->rendererData);
 	{
 		VkDeviceSize bufferSize = sizeof(mesh->vertices[0]) * mesh->vertices_count;
 
@@ -138,6 +134,8 @@ void VulkanRenderer::UnregisterModel(Model* model)
 		UnregisterMesh(mesh);
 	for (Texture* texture : model->textures)
 		UnregisterTexture(texture);
+	//vkDestroyDescriptorSet(*device, ((VulkanModelData*)(model->rendererData))->descriptorSet, nullptr);
+	free(model->rendererData);
 }
 
 void VulkanRenderer::RegisterModel(Model* model)
@@ -146,6 +144,9 @@ void VulkanRenderer::RegisterModel(Model* model)
 		RegisterMesh(mesh);
 	for (Texture* texture : model->textures)
 		RegisterTexture(texture);
+	model->rendererData = malloc(sizeof(VulkanModelData));
+	((VulkanModelData*)(model->rendererData))->ubo = new VulkanUniformBufferObject(device, &physicalDevice, sizeof(UBO_Model), new UBO_Model());
+	((VulkanModelData*)(model->rendererData))->descriptorSet = descriptorPool->AllocateDescriptorSet(viewProjDescriptorSetLayout, ((VulkanModelData*)(model->rendererData))->ubo, model->textures[0]);
 }
 
 void VulkanRenderer::UnregisterTexture(Texture * texture)
@@ -192,17 +193,18 @@ void VulkanRenderer::RegisterTexture(Texture* texture)
 
 void VulkanRenderer::RenderMesh(Mesh* mesh)
 {
-	vkCmdBindPipeline(activeCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline);
-	vkCmdBindDescriptorSets(activeCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 0, 1, &descriptorSet, 0, nullptr);
-	VkBuffer vertexBuffers[] = { ((VulkanModelData*)mesh->rendererData)->vertexBuffer };
+	VkBuffer vertexBuffers[] = { ((VulkanMeshData*)mesh->rendererData)->vertexBuffer };
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(activeCommandBuffer, 0, 1, vertexBuffers, offsets);
-	vkCmdBindIndexBuffer(activeCommandBuffer, ((VulkanModelData*)mesh->rendererData)->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdBindIndexBuffer(activeCommandBuffer, ((VulkanMeshData*)mesh->rendererData)->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdDrawIndexed(activeCommandBuffer, static_cast<uint32_t>(mesh->indices_count), 1, 0, 0, 0);
 }
 
 void VulkanRenderer::RenderModel(Model* model)
 {
+	vkCmdBindPipeline(activeCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline);
+	VkDescriptorSet descriptorSet = ((VulkanModelData*)model->rendererData)->descriptorSet;
+	vkCmdBindDescriptorSets(activeCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 0, 1, &descriptorSet, 0, nullptr);
 	for (Mesh* mesh : model->meshes)
 		RenderMesh(mesh);
 }
@@ -254,7 +256,6 @@ void VulkanRenderer::Present()
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-	ubo->model = glm::rotate(glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(0.2f)),time * glm::radians(90.0f),glm::vec3(0.0f, 0.0f, 1.0f)), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	ubo->view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo->proj = glm::perspective(glm::radians(45.0f), width / (float)height, 0.1f, 10.0f);
 	ubo->proj[1][1] *= -1;

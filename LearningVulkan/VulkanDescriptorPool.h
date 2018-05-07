@@ -11,7 +11,7 @@ class VulkanDescriptorPool
 {
 	VulkanDevice* device;
 
-	VkDescriptorPool descriptorPool;
+	VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 public:
 	VulkanDescriptorPool(VulkanDevice* device);
 	~VulkanDescriptorPool();

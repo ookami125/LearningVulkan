@@ -8,7 +8,7 @@
 #include "Vertex.h"
 #include <vulkan\vulkan.h>
 
-VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain, VulkanShaderStage* shaderStage, VulkanRenderPass* renderPass, std::vector<VulkanDescriptorSetLayout*> descriptorSets) : device(device)
+VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain, VulkanShaderStage* shaderStage, VulkanRenderPass* renderPass, std::vector<VulkanDescriptorSetLayout*> descriptorSetLayouts) : device(device)
 {
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -17,8 +17,9 @@ VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain,
 	auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
@@ -85,14 +86,14 @@ VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain,
 	colorBlending.blendConstants[2] = 0.0f;
 	colorBlending.blendConstants[3] = 0.0f;
 
-	std::vector<VkDescriptorSet> descriptorSetLayout(descriptorSets.size());
-	for (uint32_t i = 0; i < descriptorSets.size(); ++i)
-		descriptorSetLayout[i] = *descriptorSets[i];
+	std::vector<VkDescriptorSetLayout> VectorDescriptorSetLayouts(descriptorSetLayouts.size());
+	for (uint32_t i = 0; i < descriptorSetLayouts.size(); ++i)
+		VectorDescriptorSetLayouts[i] = *descriptorSetLayouts[i];
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = descriptorSetLayout.size();
-	pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
+	pipelineLayoutInfo.setLayoutCount = VectorDescriptorSetLayouts.size();
+	pipelineLayoutInfo.pSetLayouts = VectorDescriptorSetLayouts.data();
 
 	if (vkCreatePipelineLayout(*device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 		throw new VulkanException("failed to create pipeline layout!", __LINE__, __FILE__);

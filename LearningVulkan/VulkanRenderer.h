@@ -24,10 +24,14 @@ struct Model;
 struct Mesh;
 struct Texture;
 
-struct UniformBufferObject {
-	glm::mat4 model;
+struct UBO_ViewProj {
 	glm::mat4 view;
 	glm::mat4 proj;
+};
+
+struct UBO_Model {
+	glm::mat4 model = glm::mat4(1);
+	glm::mat4 bones[100];
 };
 
 class VulkanRenderer
@@ -46,12 +50,13 @@ class VulkanRenderer
 
 	VkCommandBuffer activeCommandBuffer;
 
-	VulkanDescriptorSetLayout* descriptorSetLayout;
+	VulkanDescriptorSetLayout* viewProjDescriptorSetLayout;
+	VulkanDescriptorSetLayout* modelDescriptorSetLayout;
 
 	VulkanDescriptorPool* descriptorPool;
 	VkDescriptorSet descriptorSet;
 
-	UniformBufferObject* ubo;
+	UBO_ViewProj* ubo;
 	VulkanUniformBufferObject* vubo;
 
 	VulkanImageSampler* imageSmapler;
@@ -61,8 +66,6 @@ class VulkanRenderer
 public:
 	VulkanRenderer(HWND hwnd);
 	~VulkanRenderer();
-
-	void AllocShit(Texture* texture);
 
 	void UnregisterMesh(Mesh * mesh);
 	void RegisterMesh(Mesh * mesh);
