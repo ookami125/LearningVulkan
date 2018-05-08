@@ -219,7 +219,7 @@ Model::Model(std::string filepath)
 				{
 					auto bone = mesh->mBones[j];
 
-					meshP->boneOffsets[j] = glm::transpose(glm::make_mat4(&bone->mOffsetMatrix.a1));
+					meshP->boneOffsets[j] = glm::make_mat4(&bone->mOffsetMatrix.a1);
 					for (uint32_t k = 0; k < bone->mNumWeights; ++k)
 					{
 						auto weight = bone->mWeights[k];
@@ -248,15 +248,13 @@ Model::Model(std::string filepath)
 			meshes.push_back(meshP);
 		}
 	}
+	invTransform = glm::inverse(glm::make_mat4(&scene->mRootNode->mTransformation.a1));
 }
 
 std::vector<glm::mat4> Model::GetAnimationFrame(int animationID, int meshID, double time)
 {
-	//auto animation = animations[animationID];
-	//std::vector<glm::mat4> frame = animation->GetAnimationFrame(time);
-	//for (int i = 0; i < frame.size(); ++i)
-	//{
-	//	frame[0] = frame[0] * meshes[meshID]->boneOffsets[i];
-	//}
-	return animations[animationID]->GetAnimationFrame(time);
+	std::vector<glm::mat4> mats = animations[animationID]->GetAnimationFrame(time);
+	for (uint32_t i = 0; i < mats.size(); ++i)
+		mats[i] = invTransform * mats[i] * meshes[meshID]->boneOffsets[i];
+	return mats;
 }

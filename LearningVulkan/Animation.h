@@ -17,11 +17,18 @@ enum KeyFrameBitTypes
 
 struct KeyFrame
 {
-	uint8_t type;
+	uint8_t type = 0;
+	KeyFrame* next = nullptr;
+	double time;
 	glm::vec3 translate;
 	glm::fquat rotate;
 	glm::vec3 scale;
 	glm::mat4 getMatrix();
+
+	KeyFrame() = default;
+	KeyFrame(double time) : time(time) {};
+
+	//KeyFrame lerp(KeyFrame* kf, double ratio);
 };
 
 class Bone
@@ -29,6 +36,8 @@ class Bone
 	std::string name;
 	uint32_t id;
 	Bone* parent = nullptr;
+	glm::mat4 offset;
+	std::vector<double> times;
 	std::map<double, KeyFrame> keyFrames;
 	KeyFrame * GetOrCreateKeyFrame(double time);
 public:
@@ -36,12 +45,16 @@ public:
 
 	inline uint32_t GetID();
 	inline Bone* GetParent();
+	inline glm::mat4 GetOffset();
+
+	KeyFrame * GetPrevFrameToTime(double time);
 
 	glm::mat4 GetMatrix(double time);
 };
 
 class Animation
 {
+	double duration = 0.0f;
 	std::vector<Bone*> bones;
 public:
 	Animation(const aiAnimation* animation, const aiScene* scene);

@@ -31,6 +31,7 @@ struct Mesh
 	uint32_t indices_count;
 	uint32_t* indices;
 	glm::mat4* boneOffsets;
+
 	void* rendererData = nullptr;
 };
 
@@ -40,6 +41,7 @@ struct Model
 	std::vector<Material*> materials;
 	std::vector<Mesh*> meshes;
 	std::vector<Animation*> animations;
+	glm::mat4 invTransform;
 	void* rendererData;
 
 public:

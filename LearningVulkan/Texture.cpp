@@ -11,7 +11,7 @@ Texture::Texture(aiTexture * tex)
 		size_t size = sizeof(uint8_t) * width * height * 4;
 		auto indata = (uint8_t*)tex->pcData;
 		bytes = (uint8_t*)malloc(size);
-		for (int i = 0; i < size; i+=4)
+		for (uint32_t i = 0; i < size; i+=4)
 		{
 			bytes[i + 0] = indata[i + 2];
 			bytes[i + 1] = indata[i + 1];

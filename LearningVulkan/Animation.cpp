@@ -55,15 +55,20 @@ Animation::Animation(const aiAnimation * animation, const aiScene * scene)
 	}
 
 	printf("stage2\n");
+
+	duration = animation->mDuration;
 }
 
 std::vector<glm::mat4> Animation::GetAnimationFrame(double time)
 {
+	if (time > duration)
+		time = fmod(time, duration);
+	printf("time: %lf\n", time);
 	std::vector<glm::mat4> mats(bones.size());
 	for (auto bone : bones)
 	{
 		mats[bone->GetID()] = (bone->GetParent()) ? mats[bone->GetParent()->GetID()] : glm::mat4(1);
-		mats[bone->GetID()] *= bone->GetMatrix(time);
+		mats[bone->GetID()] = bone->GetMatrix(time);
 	}
 	return mats;
 }
@@ -71,7 +76,10 @@ std::vector<glm::mat4> Animation::GetAnimationFrame(double time)
 KeyFrame* Bone::GetOrCreateKeyFrame(double time)
 {
 	if (keyFrames.find(time) == keyFrames.end())
-		keyFrames.insert(std::make_pair(time, KeyFrame()));
+	{
+		times.push_back(time);
+		keyFrames.insert(std::make_pair(time, KeyFrame(time)));
+	}
 	return &keyFrames[time];
 }
 
@@ -100,7 +108,19 @@ Bone::Bone(aiNodeAnim* node, uint32_t id, Bone * parent) : name(node->mNodeName.
 	}
 
 	//Fill in data that wasn't provided
-	//for()
+	KeyFrame* last = nullptr;
+	for (int i=0; i<keyFrames.size(); ++i)
+	{
+		double time = times[i];
+		auto kf = &keyFrames[time];
+		if (kf->type != 7)
+		{
+			printf("Missing Data!\n");
+		}
+
+		kf->next = last;
+		last = kf;
+	}
 }
 
 inline uint32_t Bone::GetID()
@@ -113,9 +133,45 @@ inline Bone * Bone::GetParent()
 	return parent;
 }
 
+inline glm::mat4 Bone::GetOffset()
+{
+	return offset;
+}
+
+double binarySearch(std::vector<double> arr, int l, int r, double x)
+{
+	if (r >= l)
+	{
+		int mid = l + (r - l) / 2;
+
+		if (arr[mid] == x)
+			return arr[mid];
+
+		if (arr[mid] > x)
+			return binarySearch(arr, l, mid - 1, x);
+
+		return binarySearch(arr, mid + 1, r, x);
+	}
+
+	return arr[r];
+}
+
+KeyFrame* Bone::GetPrevFrameToTime(double time)
+{
+	return &keyFrames[binarySearch(times, 0, times.size(), time)];
+}
+
 glm::mat4 Bone::GetMatrix(double time)
 {
-	return glm::rotate(glm::mat4(1), (float)time, glm::vec3(0, 1, 0));
+	KeyFrame* prev = GetPrevFrameToTime(time);
+	if (prev == nullptr)
+		return glm::mat4(1);
+	KeyFrame* next = prev->next;
+	if (next == nullptr)
+		return prev->getMatrix();
+	double ratio = (time - prev->time) / (next->time - prev->time);
+	return glm::interpolate(prev->getMatrix(), next->getMatrix(), (float)ratio);
+	//return glm::rotate(glm::mat4(1), (float)time, glm::vec3(0, 1, 0));
 }
 
 glm::mat4 KeyFrame::getMatrix()
