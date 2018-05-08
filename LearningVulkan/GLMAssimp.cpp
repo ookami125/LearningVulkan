@@ -2,7 +2,7 @@
 
 glm::fquat fquat(aiQuaternion other)
 {
-	return glm::fquat(other.x, other.y, other.z, other.w);
+	return glm::fquat(other.w, other.x, other.y, other.z);
 }
 
 glm::vec4 vec4(aiColor4D other)

@@ -162,6 +162,14 @@ void VulkanRenderer::RegisterModel(Model* model)
 {
 	for (Mesh* mesh : model->meshes)
 		RegisterMesh(mesh);
+	if (model->textures.size() == 0)
+	{
+		aiTexture* tex = new aiTexture();
+		tex->mHeight = 2;
+		tex->mWidth = 2;
+		tex->pcData = (aiTexel*)malloc(sizeof(aiTexel) * 4);
+		model->textures.push_back(new Texture(tex));
+	}
 	for (Texture* texture : model->textures)
 		RegisterTexture(texture);
 
@@ -228,11 +236,11 @@ void VulkanRenderer::RenderMesh(Mesh* mesh)
 
 void VulkanRenderer::RenderModel(Model* model)
 {
-	//static auto startTime = std::chrono::high_resolution_clock::now();
-	//
-	//auto currentTime = std::chrono::high_resolution_clock::now();
-	//float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-	static float time = 1.3f;
+	static auto startTime = std::chrono::high_resolution_clock::now();
+	
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+	//static float time = 1.3f;
 	//time += 0.001;
 	((VulkanModelData*)model->rendererData)->ubo->model = glm::mat4(1);//glm::rotate(glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(0.2f)), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	
@@ -250,7 +258,7 @@ void VulkanRenderer::StartRender()
 {
 	swapchain->NextFrame();
 
-	uboViewProj->view = glm::lookAt(glm::vec3(10.0f, 10.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	uboViewProj->view = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	uboViewProj->proj = glm::perspective(glm::radians(45.0f), width / (float)height, 0.1f, 100.0f);
 	uboViewProj->proj[1][1] *= -1;
 	vuboViewProj->Update();

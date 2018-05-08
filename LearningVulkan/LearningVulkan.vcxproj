@@ -161,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
+    <ClInclude Include="AssimpAnimation.h" />
     <ClInclude Include="AssimpUtils.h" />
     <ClInclude Include="VulkanImageSampler.h" />
     <ClInclude Include="VulkanTextureData.h" />

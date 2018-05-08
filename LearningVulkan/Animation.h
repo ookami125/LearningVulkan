@@ -20,15 +20,15 @@ struct KeyFrame
 	uint8_t type = 0;
 	KeyFrame* next = nullptr;
 	double time;
-	glm::vec3 translate;
-	glm::fquat rotate;
-	glm::vec3 scale;
+	glm::vec3 translate = glm::vec3(0);
+	glm::fquat rotate = glm::fquat();
+	glm::vec3 scale = glm::vec3(1);
 	glm::mat4 getMatrix();
 
 	KeyFrame() = default;
 	KeyFrame(double time) : time(time) {};
 
-	//KeyFrame lerp(KeyFrame* kf, double ratio);
+	KeyFrame lerp(KeyFrame* kf, double ratio);
 };
 
 class Bone
@@ -46,6 +46,7 @@ public:
 	inline uint32_t GetID();
 	inline Bone* GetParent();
 	inline glm::mat4 GetOffset();
+	inline std::string GetName();
 
 	KeyFrame * GetPrevFrameToTime(double time);
 
@@ -55,9 +56,13 @@ public:
 class Animation
 {
 	double duration = 0.0f;
+	double tps; //ticks per second
+	std::vector<std::string> animationNodeNames;
 	std::vector<Bone*> bones;
 public:
 	Animation(const aiAnimation* animation, const aiScene* scene);
 
-	std::vector<glm::mat4> GetAnimationFrame(double time);
+	std::string GetBoneName(int i);
+
+	std::vector<std::pair<std::string, glm::mat4>> GetAnimationFrame(double time);
 };

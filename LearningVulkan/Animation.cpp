@@ -1,7 +1,7 @@
 #include "Animation.h"
 #include "Utils.h"
 #include <algorithm>
-#include <queue>
+#include <stack>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\gtx\matrix_interpolation.hpp>
@@ -9,66 +9,54 @@
 
 Animation::Animation(const aiAnimation * animation, const aiScene * scene)
 {
-	std::unordered_set<std::string> nodeNames;
-	for(uint32_t i=0; i<animation->mNumChannels; ++i)
-		nodeNames.insert(animation->mChannels[i]->mNodeName.C_Str());
-	aiNode* rootNode = nullptr;
-	for (std::string nodeName : nodeNames)
+	std::vector<aiNodeAnim*> animationNodes;
+	for (int i = 0; i < animation->mNumChannels; ++i)
 	{
-		auto temp = scene->mRootNode->FindNode(nodeName.c_str());
-		std::string parentName = temp->mParent->mName.C_Str();
-		if (nodeNames.find(parentName) == nodeNames.end())
+		animationNodeNames.push_back(animation->mChannels[i]->mNodeName.C_Str());
+		animationNodes.push_back(animation->mChannels[i]);
+	}
+	//std::vector<Bone*> bones; //order actually processed in
+	std::stack<std::pair<Bone*, aiNode*>> nodesToVisit;
+	nodesToVisit.push(std::make_pair(nullptr, scene->mRootNode));
+	while (nodesToVisit.size() > 0)
+	{
+		Bone* parentBone = nodesToVisit.top().first;
+		aiNode* node = nodesToVisit.top().second;
+		nodesToVisit.pop();
+		std::string name = node->mName.C_Str();
+		printf("checking %s...\n", name.c_str());
+		auto find = std::find(animationNodeNames.begin(), animationNodeNames.end(), name);
+		Bone* bone = nullptr;
+		if (find != animationNodeNames.end())
 		{
-			rootNode = temp;
-			break;
+			uint32_t idx = std::distance(animationNodeNames.begin(), find);
+			bone = new Bone(animationNodes[idx], idx, parentBone);
+			bones.push_back(bone);
 		}
-	}
-	printf("root node: %s\n", rootNode->mName.C_Str());
-	std::map<aiNode*, aiNodeAnim*> node2animNode;
-	for (uint32_t i = 0; i < animation->mNumChannels; ++i)
-	{
-		auto animNode = animation->mChannels[i];
-		auto node = scene->mRootNode->FindNode(animNode->mNodeName.C_Str());
-		node2animNode.insert(std::make_pair(node, animNode));
-	}
 
-	std::queue<std::pair<aiNode*, aiNode*>> toVisit;
-	toVisit.push(std::make_pair(nullptr, rootNode));
-
-	//Bone* parent = nullptr;
-	std::map<aiNode*, Bone*> node2bone;
-	node2bone.insert(std::pair<aiNode*, Bone*>(nullptr, nullptr));
-	while (toVisit.size() > 0)
-	{
-		aiNode* parentNode = toVisit.front().first;
-		aiNode* node = toVisit.front().second;
-		toVisit.pop();
-		for (uint32_t i = 0; i < node->mNumChildren; ++i)
-			toVisit.push(std::make_pair(node, node->mChildren[i]));
-		aiNodeAnim* aNode = node2animNode[node];
-		if (aNode == nullptr)
-			continue;
-		uint32_t id = std::distance(nodeNames.begin(), nodeNames.find(node->mName.C_Str()));
-		Bone* bone = new Bone(aNode, id, node2bone[parentNode]);
-		bones.push_back(bone);
-		node2bone.insert(std::make_pair(node, bone));
+		for (int i = 0; i < node->mNumChildren; ++i)
+			nodesToVisit.push(std::make_pair(bone, node->mChildren[i]));
 	}
-
-	printf("stage2\n");
 
 	duration = animation->mDuration;
+	tps = (double)(animation->mTicksPerSecond != 0 ? animation->mTicksPerSecond : 25.0f);
 }
 
-std::vector<glm::mat4> Animation::GetAnimationFrame(double time)
+std::string Animation::GetBoneName(int i)
 {
-	if (time > duration)
-		time = fmod(time, duration);
+	return animationNodeNames[i];
+}
+
+std::vector<std::pair<std::string, glm::mat4>> Animation::GetAnimationFrame(double time)
+{
+	time *= tps;
+	if (time > duration) time = fmod(time, duration);
 	printf("time: %lf\n", time);
-	std::vector<glm::mat4> mats(bones.size());
+	std::vector<std::pair<std::string, glm::mat4>> mats(bones.size());
 	for (auto bone : bones)
 	{
-		mats[bone->GetID()] = (bone->GetParent()) ? mats[bone->GetParent()->GetID()] : glm::mat4(1);
-		mats[bone->GetID()] = bone->GetMatrix(time);
+		glm::mat4 parentMat = (bone->GetParent()) ? mats[bone->GetParent()->GetID()].second : glm::mat4(1);
+		mats[bone->GetID()] = std::make_pair(bone->GetName(), parentMat * bone->GetMatrix(time));
 	}
 	return mats;
 }
@@ -109,14 +97,12 @@ Bone::Bone(aiNodeAnim* node, uint32_t id, Bone * parent) : name(node->mNodeName.
 
 	//Fill in data that wasn't provided
 	KeyFrame* last = nullptr;
-	for (int i=0; i<keyFrames.size(); ++i)
+	for (int32_t i=keyFrames.size()-1; i>=0; --i)
 	{
 		double time = times[i];
 		auto kf = &keyFrames[time];
 		if (kf->type != 7)
-		{
 			printf("Missing Data!\n");
-		}
 
 		kf->next = last;
 		last = kf;
@@ -136,6 +122,11 @@ inline Bone * Bone::GetParent()
 inline glm::mat4 Bone::GetOffset()
 {
 	return offset;
+}
+
+inline std::string Bone::GetName()
+{
+	return name;
 }
 
 double binarySearch(std::vector<double> arr, int l, int r, double x)
@@ -170,15 +161,27 @@ glm::mat4 Bone::GetMatrix(double time)
 	if (next == nullptr)
 		return prev->getMatrix();
 	double ratio = (time - prev->time) / (next->time - prev->time);
-	return glm::interpolate(prev->getMatrix(), next->getMatrix(), (float)ratio);
+	printf("%lf\n", ratio);
+	return prev->lerp(next, ratio).getMatrix();
 	//return glm::rotate(glm::mat4(1), (float)time, glm::vec3(0, 1, 0));
 }
 
 glm::mat4 KeyFrame::getMatrix()
 {
-	glm::mat4 ModelMatrix = glm::mat4();
-	glm::mat4 translate = glm::translate(glm::mat4(1.0), this->translate);
-	glm::mat4 rotate = glm::mat4_cast(this->rotate);
-	glm::mat4 scale = glm::scale(glm::mat4(1.0), this->scale);
-	return translate * rotate * scale;
+	glm::mat4 translate = glm::transpose(glm::translate(glm::mat4(1.0), this->translate));
+	glm::mat4 rotate    = glm::transpose(glm::mat4_cast(this->rotate));
+	glm::mat4 scale     = glm::transpose(glm::scale(glm::mat4(1.0), this->scale));
+	glm::mat4 result = translate *rotate * scale;;
+	return result;
+}
+
+KeyFrame KeyFrame::lerp(KeyFrame * kf, double ratio)
+{
+	KeyFrame keyFrame;
+	keyFrame.type = this->type;
+	keyFrame.time = (time + (kf->time - time) * ratio);
+	keyFrame.translate = (translate + (kf->translate - translate) * (float)ratio);
+	keyFrame.rotate = glm::slerp(rotate, kf->rotate, (float)ratio);
+	keyFrame.scale = (scale + (kf->scale - scale) * (float)ratio);
+	return keyFrame;
 }

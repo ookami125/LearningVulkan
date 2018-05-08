@@ -9,6 +9,7 @@
 #include "Vertex.h"
 #include "ResourceManager.h"
 #include "Animation.h"
+#include "AssimpAnimation.h"
 
 Model::Model(std::string filepath)
 {
@@ -116,11 +117,14 @@ Model::Model(std::string filepath)
 	if (scene->HasAnimations())
 	{
 		printf("Animations:\n");
+
 		int numAnimations = scene->mNumAnimations;
 		for (int i = 0; i < numAnimations; i++)
 		{
 			auto animation = scene->mAnimations[i];
 			Animation* anim = new Animation(animation, scene);
+
+			//LoadAnimation(animation, scene);
 			//anim->SetDuration(animation->mDuration);
 			//printf("  %s\n", name.C_Str());
 			//
@@ -167,12 +171,24 @@ Model::Model(std::string filepath)
 		}
 	}
 
+	sm = new SkinnedMesh();
+	sm->scene = sm->Importer.ReadFile(filepath, 0);
+	uint32_t vertexCount(0);
+	for (uint32_t m = 0; m < sm->scene->mNumMeshes; m++) {
+		vertexCount += sm->scene->mMeshes[m]->mNumVertices;
+	};
+	sm->bones.resize(vertexCount);
+	sm->globalInverseTransform = sm->scene->mRootNode->mTransformation;
+	sm->globalInverseTransform.Inverse();
+
 	if (scene->HasMeshes())
 	{
 		int numMeshes = scene->mNumMeshes;
 		for (int i = 0; i < numMeshes; i++)
 		{
 			auto mesh = scene->mMeshes[i];
+			sm->loadBones(mesh, 0, sm->bones);
+
 			auto materialIdx = mesh->mMaterialIndex;
 			Mesh* meshP = new Mesh();
 			meshP->mat = materials[materialIdx];
@@ -212,14 +228,19 @@ Model::Model(std::string filepath)
 				meshP->vertices_count = vertices.size();
 			}
 
+
 			if (mesh->HasBones())
 			{
-				meshP->boneOffsets = (glm::mat4*)malloc(sizeof(glm::mat4) * mesh->mNumBones);
+				printf("mesh bones:\n");
+				//meshP->boneOffsets = (glm::mat4*)malloc(sizeof(glm::mat4) * mesh->mNumBones);
 				for (uint32_t j = 0; j < mesh->mNumBones; ++j)
 				{
 					auto bone = mesh->mBones[j];
-
-					meshP->boneOffsets[j] = glm::make_mat4(&bone->mOffsetMatrix.a1);
+					std::string boneName = bone->mName.C_Str();
+					printf("checking %s...\n", boneName.c_str());
+					
+					meshP->boneNames.push_back(boneName);
+					meshP->boneOffsets.insert(std::make_pair(boneName, glm::transpose(glm::make_mat4(&bone->mOffsetMatrix.a1))));
 					for (uint32_t k = 0; k < bone->mNumWeights; ++k)
 					{
 						auto weight = bone->mWeights[k];
@@ -248,13 +269,37 @@ Model::Model(std::string filepath)
 			meshes.push_back(meshP);
 		}
 	}
+
 	invTransform = glm::inverse(glm::make_mat4(&scene->mRootNode->mTransformation.a1));
 }
 
 std::vector<glm::mat4> Model::GetAnimationFrame(int animationID, int meshID, double time)
 {
-	std::vector<glm::mat4> mats = animations[animationID]->GetAnimationFrame(time);
-	for (uint32_t i = 0; i < mats.size(); ++i)
-		mats[i] = invTransform * mats[i] * meshes[meshID]->boneOffsets[i];
-	return mats;
+	//time = 5.31e-5;
+
+	//sm->setAnimation(animationID);
+	//sm->update((float)time);
+	auto bad_mats = animations[animationID]->GetAnimationFrame(time);
+	std::vector<glm::mat4> bad_mats2(bad_mats.size());// = animations[animationID]->GetAnimationFrame(time);
+	//std::vector<glm::mat4> mats(sm->boneTransforms.size());// animations[animationID]->GetAnimationFrame(time);
+	for (uint32_t i = 0; i < bad_mats.size(); ++i)
+	{
+		std::string name = bad_mats[i].first;
+		int outputIdx = std::distance(meshes[meshID]->boneNames.begin(), std::find(meshes[meshID]->boneNames.begin(), meshes[meshID]->boneNames.end(), name));
+		bad_mats2[outputIdx] = glm::transpose(bad_mats[i].second);// *meshes[meshID]->boneOffsets[name]); //invTransform * mats[i] * // 
+	}
+	//for (int i = 0; i < mats.size(); ++i)
+	//{
+	//	mats[i] = glm::transpose(glm::make_mat4(&sm->boneTransforms[i].a1));
+	//}
+	return bad_mats2;
 }
+
+
+
+
+
+
+
+
+

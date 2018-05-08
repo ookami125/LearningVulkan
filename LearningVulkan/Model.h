@@ -1,10 +1,12 @@
 #pragma once
 #include <vector>
 #include <glm\glm.hpp>
+#include <map>
 
 struct Texture;
 struct Vertex;
 class Animation;
+class SkinnedMesh;
 
 struct Material
 {
@@ -30,7 +32,8 @@ struct Mesh
 	Vertex* vertices;
 	uint32_t indices_count;
 	uint32_t* indices;
-	glm::mat4* boneOffsets;
+	std::vector<std::string> boneNames;
+	std::map<std::string, glm::mat4> boneOffsets;
 
 	void* rendererData = nullptr;
 };
@@ -42,6 +45,7 @@ struct Model
 	std::vector<Mesh*> meshes;
 	std::vector<Animation*> animations;
 	glm::mat4 invTransform;
+	SkinnedMesh* sm;
 	void* rendererData;
 
 public:

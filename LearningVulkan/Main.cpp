@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 
 	VulkanRenderer* renderer = new VulkanRenderer(handle);
 
-	Model* character = new Model("models/Box_Walk.fbx");
+	Model* character = new Model("models/Samba Dancing.fbx");
 	renderer->RegisterModel(character);
 
 	//renderer->AllocShit(character->textures[0]);

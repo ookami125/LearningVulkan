@@ -20,6 +20,7 @@ layout(location = 4) in vec4 inBoneWeight;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
+layout(location = 2) out vec4 fragWorldPos;
 
 out gl_PerVertex {
     vec4 gl_Position;
@@ -34,16 +35,16 @@ vec3 hsv2rgb(vec3 c) {
 void main() {
     
 	mat4 boneTransform = inModelData.bones[inBoneIdx.x] * inBoneWeight.x;
-	boneTransform += inModelData.bones[inBoneIdx.y] * inBoneWeight.y;
-	boneTransform += inModelData.bones[inBoneIdx.z] * inBoneWeight.z;
-	boneTransform += inModelData.bones[inBoneIdx.w] * inBoneWeight.w; 
+	boneTransform     += inModelData.bones[inBoneIdx.y] * inBoneWeight.y;
+	boneTransform     += inModelData.bones[inBoneIdx.z] * inBoneWeight.z;
+	boneTransform     += inModelData.bones[inBoneIdx.w] * inBoneWeight.w;	
 	
-	gl_Position = inViewProj.proj * inViewProj.view * inModelData.model * boneTransform  * vec4(inPosition, 1.0);
+	gl_Position = inViewProj.proj * inViewProj.view * inModelData.model * boneTransform * vec4(inPosition.xyz, 1.0);
 
-    vec3 color1 = hsv2rgb(vec3(float(inBoneIdx.x)/100.0, 1.0, 1.0)) * inBoneWeight.x;
-    vec3 color2 = hsv2rgb(vec3(float(inBoneIdx.y)/100.0, 1.0, 1.0)) * inBoneWeight.y;
-    vec3 color3 = hsv2rgb(vec3(float(inBoneIdx.z)/100.0, 1.0, 1.0)) * inBoneWeight.z;
-    vec3 color4 = hsv2rgb(vec3(float(inBoneIdx.w)/100.0, 1.0, 1.0)) * inBoneWeight.w;
+    vec3 color1 = hsv2rgb(vec3(float(inBoneIdx.x)/5.0, 1.0, 1.0)) * inBoneWeight.x;
+    vec3 color2 = hsv2rgb(vec3(float(inBoneIdx.y)/5.0, 1.0, 1.0)) * inBoneWeight.y;
+    vec3 color3 = hsv2rgb(vec3(float(inBoneIdx.z)/5.0, 1.0, 1.0)) * inBoneWeight.z;
+    vec3 color4 = hsv2rgb(vec3(float(inBoneIdx.w)/5.0, 1.0, 1.0)) * inBoneWeight.w;
     fragColor = color1+color2+color3+color4;
     fragTexCoord = inTexCoord;
 }
