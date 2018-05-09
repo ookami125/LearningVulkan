@@ -6,11 +6,12 @@
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\gtx\matrix_interpolation.hpp>
 #include "GLMAssimp.h"
+#include "Model.h"
 
 Animation::Animation(const aiAnimation * animation, const aiScene * scene)
 {
 	std::vector<aiNodeAnim*> animationNodes;
-	for (int i = 0; i < animation->mNumChannels; ++i)
+	for (uint32_t i = 0; i < animation->mNumChannels; ++i)
 	{
 		animationNodeNames.push_back(animation->mChannels[i]->mNodeName.C_Str());
 		animationNodes.push_back(animation->mChannels[i]);
@@ -34,12 +35,17 @@ Animation::Animation(const aiAnimation * animation, const aiScene * scene)
 			bones.push_back(bone);
 		}
 
-		for (int i = 0; i < node->mNumChildren; ++i)
+		for (uint32_t i = 0; i < node->mNumChildren; ++i)
 			nodesToVisit.push(std::make_pair(bone, node->mChildren[i]));
 	}
 
 	duration = animation->mDuration;
-	tps = (double)(animation->mTicksPerSecond != 0 ? animation->mTicksPerSecond : 25.0f);
+	tps = (float)(animation->mTicksPerSecond != 0 ? animation->mTicksPerSecond : 25.0f);
+}
+
+std::vector<std::string> Animation::GetLayout()
+{
+	return animationNodeNames;
 }
 
 std::string Animation::GetBoneName(int i)
@@ -47,21 +53,33 @@ std::string Animation::GetBoneName(int i)
 	return animationNodeNames[i];
 }
 
-std::vector<std::pair<std::string, glm::mat4>> Animation::GetAnimationFrame(double time)
+//std::vector<std::pair<std::string, glm::mat4>> Animation::GetAnimationFrame(float time)
+//{
+//	time *= tps;
+//	if (time > duration) time = fmod(time, duration);
+//	printf("time: %lf\n", time);
+//	std::vector<std::pair<std::string, glm::mat4>> mats(bones.size());
+//	for (auto bone : bones)
+//	{
+//		glm::mat4 parentMat = (bone->GetParent()) ? mats[bone->GetParent()->GetID()].second : glm::mat4(1);
+//		mats[bone->GetID()] = std::make_pair(bone->GetName(), parentMat * bone->GetMatrix(time));
+//	}
+//	return mats;
+//}
+
+void Animation::GetAnimationFrame(std::vector<glm::mat4*> boneMap, float time)
 {
 	time *= tps;
 	if (time > duration) time = fmod(time, duration);
-	printf("time: %lf\n", time);
-	std::vector<std::pair<std::string, glm::mat4>> mats(bones.size());
+	//printf("time: %lf\n", time);
 	for (auto bone : bones)
 	{
-		glm::mat4 parentMat = (bone->GetParent()) ? mats[bone->GetParent()->GetID()].second : glm::mat4(1);
-		mats[bone->GetID()] = std::make_pair(bone->GetName(), parentMat * bone->GetMatrix(time));
+		glm::mat4 parentMat = (bone->GetParent()) ? *boneMap[bone->GetParent()->GetID()] : glm::mat4(1);
+		*boneMap[bone->GetID()] = bone->GetMatrix(time) * parentMat;
 	}
-	return mats;
 }
 
-KeyFrame* Bone::GetOrCreateKeyFrame(double time)
+KeyFrame* Bone::GetOrCreateKeyFrame(float time)
 {
 	if (keyFrames.find(time) == keyFrames.end())
 	{
@@ -99,7 +117,7 @@ Bone::Bone(aiNodeAnim* node, uint32_t id, Bone * parent) : name(node->mNodeName.
 	KeyFrame* last = nullptr;
 	for (int32_t i=keyFrames.size()-1; i>=0; --i)
 	{
-		double time = times[i];
+		float time = times[i];
 		auto kf = &keyFrames[time];
 		if (kf->type != 7)
 			printf("Missing Data!\n");
@@ -129,9 +147,9 @@ inline std::string Bone::GetName()
 	return name;
 }
 
-double binarySearch(std::vector<double> arr, int l, int r, double x)
+float binarySearchNR(std::vector<float> arr, int l, int r, float x)
 {
-	if (r >= l)
+	while(r >= l)
 	{
 		int mid = l + (r - l) / 2;
 
@@ -139,20 +157,28 @@ double binarySearch(std::vector<double> arr, int l, int r, double x)
 			return arr[mid];
 
 		if (arr[mid] > x)
-			return binarySearch(arr, l, mid - 1, x);
+		{
+			l = l;
+			r = mid - 1;
+			continue;
+			//return binarySearch(arr, l, mid - 1, x);
+		}
 
-		return binarySearch(arr, mid + 1, r, x);
+		l = mid + 1;
+		r = r;
+
+		//return binarySearch(arr, mid + 1, r, x);
 	}
 
 	return arr[r];
 }
 
-KeyFrame* Bone::GetPrevFrameToTime(double time)
+KeyFrame* Bone::GetPrevFrameToTime(float time)
 {
-	return &keyFrames[binarySearch(times, 0, times.size(), time)];
+	return &keyFrames[binarySearchNR(times, 0, times.size()-1, time)];
 }
 
-glm::mat4 Bone::GetMatrix(double time)
+glm::mat4 Bone::GetMatrix(float time)
 {
 	KeyFrame* prev = GetPrevFrameToTime(time);
 	if (prev == nullptr)
@@ -160,8 +186,8 @@ glm::mat4 Bone::GetMatrix(double time)
 	KeyFrame* next = prev->next;
 	if (next == nullptr)
 		return prev->getMatrix();
-	double ratio = (time - prev->time) / (next->time - prev->time);
-	printf("%lf\n", ratio);
+	float ratio = (time - prev->time) / (next->time - prev->time);
+	//printf("%lf\n", ratio);
 	return prev->lerp(next, ratio).getMatrix();
 	//return glm::rotate(glm::mat4(1), (float)time, glm::vec3(0, 1, 0));
 }
@@ -171,11 +197,11 @@ glm::mat4 KeyFrame::getMatrix()
 	glm::mat4 translate = glm::transpose(glm::translate(glm::mat4(1.0), this->translate));
 	glm::mat4 rotate    = glm::transpose(glm::mat4_cast(this->rotate));
 	glm::mat4 scale     = glm::transpose(glm::scale(glm::mat4(1.0), this->scale));
-	glm::mat4 result = translate *rotate * scale;;
+	glm::mat4 result = scale * rotate * translate;
 	return result;
 }
 
-KeyFrame KeyFrame::lerp(KeyFrame * kf, double ratio)
+KeyFrame KeyFrame::lerp(KeyFrame * kf, float ratio)
 {
 	KeyFrame keyFrame;
 	keyFrame.type = this->type;

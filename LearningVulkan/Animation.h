@@ -8,6 +8,8 @@
 #include <assimp\anim.h>
 #include <assimp\scene.h>
 
+struct Mesh;
+
 enum KeyFrameBitTypes
 {
 	KeyFrame_Translate = 1,
@@ -19,16 +21,16 @@ struct KeyFrame
 {
 	uint8_t type = 0;
 	KeyFrame* next = nullptr;
-	double time;
+	float time;
 	glm::vec3 translate = glm::vec3(0);
 	glm::fquat rotate = glm::fquat();
 	glm::vec3 scale = glm::vec3(1);
 	glm::mat4 getMatrix();
 
 	KeyFrame() = default;
-	KeyFrame(double time) : time(time) {};
+	KeyFrame(float time) : time(time) {};
 
-	KeyFrame lerp(KeyFrame* kf, double ratio);
+	KeyFrame lerp(KeyFrame* kf, float ratio);
 };
 
 class Bone
@@ -37,9 +39,9 @@ class Bone
 	uint32_t id;
 	Bone* parent = nullptr;
 	glm::mat4 offset;
-	std::vector<double> times;
-	std::map<double, KeyFrame> keyFrames;
-	KeyFrame * GetOrCreateKeyFrame(double time);
+	std::vector<float> times;
+	std::map<float, KeyFrame> keyFrames;
+	KeyFrame * GetOrCreateKeyFrame(float time);
 public:
 	Bone(aiNodeAnim* node, uint32_t id, Bone* parent);
 
@@ -48,21 +50,23 @@ public:
 	inline glm::mat4 GetOffset();
 	inline std::string GetName();
 
-	KeyFrame * GetPrevFrameToTime(double time);
+	KeyFrame * GetPrevFrameToTime(float time);
 
-	glm::mat4 GetMatrix(double time);
+	glm::mat4 GetMatrix(float time);
 };
 
 class Animation
 {
-	double duration = 0.0f;
-	double tps; //ticks per second
+	float duration = 0.0f;
+	float tps; //ticks per second
 	std::vector<std::string> animationNodeNames;
 	std::vector<Bone*> bones;
 public:
 	Animation(const aiAnimation* animation, const aiScene* scene);
 
+	std::vector<std::string> GetLayout();
+
 	std::string GetBoneName(int i);
 
-	std::vector<std::pair<std::string, glm::mat4>> GetAnimationFrame(double time);
+	void GetAnimationFrame(std::vector<glm::mat4*> boneMap, float time);
 };

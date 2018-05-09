@@ -8,6 +8,19 @@
 
 #include "VulkanRenderer.h"
 #include "Model.h"
+#include "VulkanModelData.h"
+#include <algorithm>
+#include <chrono>
+#include <thread>
+
+//bool stopping = false;
+//void animationStuff(Model* model)
+//{
+//	while (!stopping)
+//	{
+//
+//	}
+//}
 
 int main(int argc, char** argv)
 {
@@ -22,7 +35,11 @@ int main(int argc, char** argv)
 	VulkanRenderer* renderer = new VulkanRenderer(handle);
 
 	Model* character = new Model("models/Samba Dancing.fbx");
+	character->LoadAnimations("models/Head Spinning.fbx");
+
 	renderer->RegisterModel(character);
+
+	//std::thread animationThread(animationStuff, character);
 
 	//renderer->AllocShit(character->textures[0]);
 
@@ -34,6 +51,9 @@ int main(int argc, char** argv)
 		renderer->EndRender();
 		renderer->Present();
 	}
+
+	//stopping = true;
+	//animationThread.join();
 
 	renderer->UnregisterModel(character);
 	delete character;

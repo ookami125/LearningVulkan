@@ -9,7 +9,6 @@
 #include "Vertex.h"
 #include "ResourceManager.h"
 #include "Animation.h"
-#include "AssimpAnimation.h"
 
 Model::Model(std::string filepath)
 {
@@ -123,63 +122,9 @@ Model::Model(std::string filepath)
 		{
 			auto animation = scene->mAnimations[i];
 			Animation* anim = new Animation(animation, scene);
-
-			//LoadAnimation(animation, scene);
-			//anim->SetDuration(animation->mDuration);
-			//printf("  %s\n", name.C_Str());
-			//
-			//int numChannels = animation->mNumChannels;
-			//for (int j = 0; j < numChannels; ++j)
-			//{
-			//	auto channel = animation->mChannels[j];
-			//	Bone* bone = new Bone(channel->mNodeName.C_Str());
-			//	//printf("    node name: %s\n", channel->mNodeName.C_Str());
-			//
-			//	int numPositionKeys = channel->mNumPositionKeys;
-			//	for (int k = 0; k < numPositionKeys; ++k)
-			//	{
-			//		auto positionKey = channel->mPositionKeys[k];
-			//		glm::vec3 pos = vec3(positionKey.mValue);
-			//		bone->AddPositionKey(positionKey.mTime, pos);
-			//		//printf("      %f - {%f,%f,%f}\n", positionKey.mTime, pos.x, pos.y, pos.z);
-			//	}
-			//
-			//	int numRotationKeys = channel->mNumRotationKeys;
-			//	for (int k = 0; k < numRotationKeys; ++k)
-			//	{
-			//		auto rotationKey = channel->mRotationKeys[k];
-			//		glm::fquat rot = fquat(rotationKey.mValue);
-			//		bone->AddRotationKey(rotationKey.mTime, rot);
-			//		//printf("      %f - {%f,%f,%f,%f}\n", rotationKey.mTime, rot.x, rot.y, rot.z, rot.w);
-			//	}
-			//
-			//	int numScalingKeys = channel->mNumScalingKeys;
-			//	for (int k = 0; k < numScalingKeys; ++k)
-			//	{
-			//		auto scalingKey = channel->mScalingKeys[k];
-			//		glm::vec3 scale = vec3(scalingKey.mValue);
-			//		bone->AddScalingKey(scalingKey.mTime, scale);
-			//		//printf("      %f - {%f,%f,%f}\n", scalingKey.mTime, scale.x, scale.y, scale.z);
-			//	}
-			//
-			//	aiString parentBone = scene->mRootNode->FindNode(channel->mNodeName)->mParent->mName;
-			//	anim->AddBone(bone, parentBone.C_Str());
-			//}
-			//
-			//anim->Compile();
 			animations.push_back(anim);
 		}
 	}
-
-	sm = new SkinnedMesh();
-	sm->scene = sm->Importer.ReadFile(filepath, 0);
-	uint32_t vertexCount(0);
-	for (uint32_t m = 0; m < sm->scene->mNumMeshes; m++) {
-		vertexCount += sm->scene->mMeshes[m]->mNumVertices;
-	};
-	sm->bones.resize(vertexCount);
-	sm->globalInverseTransform = sm->scene->mRootNode->mTransformation;
-	sm->globalInverseTransform.Inverse();
 
 	if (scene->HasMeshes())
 	{
@@ -187,7 +132,6 @@ Model::Model(std::string filepath)
 		for (int i = 0; i < numMeshes; i++)
 		{
 			auto mesh = scene->mMeshes[i];
-			sm->loadBones(mesh, 0, sm->bones);
 
 			auto materialIdx = mesh->mMaterialIndex;
 			Mesh* meshP = new Mesh();
@@ -228,7 +172,6 @@ Model::Model(std::string filepath)
 				meshP->vertices_count = vertices.size();
 			}
 
-
 			if (mesh->HasBones())
 			{
 				printf("mesh bones:\n");
@@ -240,7 +183,7 @@ Model::Model(std::string filepath)
 					printf("checking %s...\n", boneName.c_str());
 					
 					meshP->boneNames.push_back(boneName);
-					meshP->boneOffsets.insert(std::make_pair(boneName, glm::transpose(glm::make_mat4(&bone->mOffsetMatrix.a1))));
+					meshP->boneOffsets.push_back(glm::transpose(glm::make_mat4(&bone->mOffsetMatrix.a1)));
 					for (uint32_t k = 0; k < bone->mNumWeights; ++k)
 					{
 						auto weight = bone->mWeights[k];
@@ -265,6 +208,27 @@ Model::Model(std::string filepath)
 					float total = glm::compAdd(meshP->vertices[j].bonesWeights);
 					meshP->vertices[j].bonesWeights *= glm::vec4(1.0f / total);
 				}
+
+				meshP->bones.resize(mesh->mNumBones);
+
+				//Link all animations to the mesh
+				for (Animation* anim : animations)
+				{
+					auto layout = anim->GetLayout();
+					std::vector<glm::mat4*> boneMap;
+					for (auto name : layout)
+					{
+						auto found = std::find(meshP->boneNames.begin(), meshP->boneNames.end(), name);
+						if (found == meshP->boneNames.end())
+						{
+							boneMap.push_back(&meshP->garbage);
+							continue;
+						}
+						uint32_t id = std::distance(meshP->boneNames.begin(), found);
+						boneMap.push_back(&meshP->bones[id]);
+					}
+					meshP->boneMaps.push_back(boneMap);
+				}
 			}
 			meshes.push_back(meshP);
 		}
@@ -276,23 +240,59 @@ Model::Model(std::string filepath)
 std::vector<glm::mat4> Model::GetAnimationFrame(int animationID, int meshID, double time)
 {
 	//time = 5.31e-5;
+	auto mesh = meshes[meshID];
+	animations[animationID]->GetAnimationFrame(mesh->boneMaps[animationID], (float)time);
+	auto bones = mesh->bones;
+	for (uint32_t i = 0; i < bones.size(); ++i)
+		bones[i] = glm::transpose(bones[i]) * mesh->boneOffsets[i];
+	return bones;
+}
 
-	//sm->setAnimation(animationID);
-	//sm->update((float)time);
-	auto bad_mats = animations[animationID]->GetAnimationFrame(time);
-	std::vector<glm::mat4> bad_mats2(bad_mats.size());// = animations[animationID]->GetAnimationFrame(time);
-	//std::vector<glm::mat4> mats(sm->boneTransforms.size());// animations[animationID]->GetAnimationFrame(time);
-	for (uint32_t i = 0; i < bad_mats.size(); ++i)
-	{
-		std::string name = bad_mats[i].first;
-		int outputIdx = std::distance(meshes[meshID]->boneNames.begin(), std::find(meshes[meshID]->boneNames.begin(), meshes[meshID]->boneNames.end(), name));
-		bad_mats2[outputIdx] = glm::transpose(bad_mats[i].second);// *meshes[meshID]->boneOffsets[name]); //invTransform * mats[i] * // 
+void Model::LoadAnimations(std::string filepath)
+{
+	Assimp::Importer importer;
+	auto scene = importer.ReadFile(filepath.c_str(), aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_FlipWindingOrder);
+	if (!scene) {
+		throw std::runtime_error(importer.GetErrorString());
 	}
-	//for (int i = 0; i < mats.size(); ++i)
-	//{
-	//	mats[i] = glm::transpose(glm::make_mat4(&sm->boneTransforms[i].a1));
-	//}
-	return bad_mats2;
+
+	if (scene->HasAnimations())
+	{
+		printf("Animations:\n");
+
+		int numAnimations = scene->mNumAnimations;
+		std::vector<Animation*> anims;
+		for (int i = 0; i < numAnimations; i++)
+		{
+			auto animation = scene->mAnimations[i];
+			Animation* anim = new Animation(animation, scene);
+			anims.push_back(anim);
+			animations.push_back(anim);
+		}
+		
+		for (Mesh* mesh : meshes)
+		{
+			for (Animation* anim : anims)
+			{
+				auto layout = anim->GetLayout();
+				std::vector<glm::mat4*> boneMap;
+				for (auto name : layout)
+				{
+					auto found = std::find(mesh->boneNames.begin(), mesh->boneNames.end(), name);
+					if (found == mesh->boneNames.end())
+					{
+						boneMap.push_back(&mesh->garbage);
+						continue;
+					}
+					uint32_t id = std::distance(mesh->boneNames.begin(), found);
+					boneMap.push_back(&mesh->bones[id]);
+				}
+				mesh->boneMaps.push_back(boneMap);
+			}
+		}
+	}
+
+	invTransform = glm::inverse(glm::make_mat4(&scene->mRootNode->mTransformation.a1));
 }
 
 

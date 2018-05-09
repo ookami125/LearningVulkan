@@ -33,7 +33,10 @@ struct Mesh
 	uint32_t indices_count;
 	uint32_t* indices;
 	std::vector<std::string> boneNames;
-	std::map<std::string, glm::mat4> boneOffsets;
+	std::vector<glm::mat4> boneOffsets;
+	std::vector<glm::mat4> bones;
+	std::vector<std::vector<glm::mat4*>> boneMaps;
+	glm::mat4 garbage;
 
 	void* rendererData = nullptr;
 };
@@ -45,11 +48,12 @@ struct Model
 	std::vector<Mesh*> meshes;
 	std::vector<Animation*> animations;
 	glm::mat4 invTransform;
-	SkinnedMesh* sm;
 	void* rendererData;
 
 public:
 	Model(std::string filepath);
 
 	std::vector<glm::mat4> GetAnimationFrame(int animationID, int meshID, double time);
+
+	void LoadAnimations(std::string filepath);
 };
