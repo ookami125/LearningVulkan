@@ -26,7 +26,7 @@ Model::Model(std::string filepath)
 			auto texture = scene->mTextures[i];
 			auto tex = ResourceManager::LoadTexture(texture);
 			textures.push_back(tex);
-			printf("texture format: %s\n", texture->achFormatHint);
+			//printf("texture format: %s\n", texture->achFormatHint);
 		}
 	}
 
@@ -40,19 +40,17 @@ Model::Model(std::string filepath)
 
 			aiString name;
 			material->Get(AI_MATKEY_NAME, name);
-			printf("AI_MATKEY_NAME: %s\n", name.C_Str());
+			//printf("AI_MATKEY_NAME: %s\n", name.C_Str());
 			mat->name = name.C_Str();
 
 			aiColor3D color(0.f, 0.f, 0.f);
 			material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-			printf("AI_MATKEY_COLOR_DIFFUSE: vec3(%f, %f, %f)\n", color.r, color.g, color.b);
+			//printf("AI_MATKEY_COLOR_DIFFUSE: vec3(%f, %f, %f)\n", color.r, color.g, color.b);
 			mat->diffuseColor = vec3(color);
 
 			for (aiTextureType TextureType = aiTextureType_DIFFUSE; TextureType < aiTextureType_UNKNOWN; TextureType = (aiTextureType)((int)TextureType + 1))
 			{
 				int textureCount = material->GetTextureCount(TextureType);
-				//if (textureCount > 0)
-				//	printf("%s\n", aiTextureTypeName(TextureType).c_str());
 				for (int j = 0; j < textureCount; ++j)
 				{
 					aiString temp;
@@ -115,7 +113,7 @@ Model::Model(std::string filepath)
 
 	if (scene->HasAnimations())
 	{
-		printf("Animations:\n");
+		//printf("Animations:\n");
 
 		int numAnimations = scene->mNumAnimations;
 		for (int i = 0; i < numAnimations; i++)
@@ -174,13 +172,13 @@ Model::Model(std::string filepath)
 
 			if (mesh->HasBones())
 			{
-				printf("mesh bones:\n");
+				//printf("mesh bones:\n");
 				//meshP->boneOffsets = (glm::mat4*)malloc(sizeof(glm::mat4) * mesh->mNumBones);
 				for (uint32_t j = 0; j < mesh->mNumBones; ++j)
 				{
 					auto bone = mesh->mBones[j];
 					std::string boneName = bone->mName.C_Str();
-					printf("checking %s...\n", boneName.c_str());
+					//printf("checking %s...\n", boneName.c_str());
 					
 					meshP->boneNames.push_back(boneName);
 					meshP->boneOffsets.push_back(glm::transpose(glm::make_mat4(&bone->mOffsetMatrix.a1)));
@@ -258,7 +256,7 @@ void Model::LoadAnimations(std::string filepath)
 
 	if (scene->HasAnimations())
 	{
-		printf("Animations:\n");
+		//printf("Animations:\n");
 
 		int numAnimations = scene->mNumAnimations;
 		std::vector<Animation*> anims;

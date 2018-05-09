@@ -25,7 +25,7 @@ Animation::Animation(const aiAnimation * animation, const aiScene * scene)
 		aiNode* node = nodesToVisit.top().second;
 		nodesToVisit.pop();
 		std::string name = node->mName.C_Str();
-		printf("checking %s...\n", name.c_str());
+		//printf("checking %s...\n", name.c_str());
 		auto find = std::find(animationNodeNames.begin(), animationNodeNames.end(), name);
 		Bone* bone = nullptr;
 		if (find != animationNodeNames.end())

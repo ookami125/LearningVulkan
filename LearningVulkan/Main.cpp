@@ -34,10 +34,12 @@ int main(int argc, char** argv)
 
 	VulkanRenderer* renderer = new VulkanRenderer(handle);
 
-	Model* character = new Model("models/Samba Dancing.fbx");
-	character->LoadAnimations("models/Head Spinning.fbx");
+	Model* character = new Model("models/Box_Walk.fbx");
+	Model* character2 = new Model("models/Samba Dancing.fbx");
+	//character->LoadAnimations("models/Head Spinning.fbx");
 
 	renderer->RegisterModel(character);
+	renderer->RegisterModel(character2);
 
 	//std::thread animationThread(animationStuff, character);
 
@@ -48,6 +50,7 @@ int main(int argc, char** argv)
 		glfwPollEvents();
 		renderer->StartRender();
 		renderer->RenderModel(character);
+		renderer->RenderModel(character2);
 		renderer->EndRender();
 		renderer->Present();
 	}
@@ -57,6 +60,8 @@ int main(int argc, char** argv)
 
 	renderer->UnregisterModel(character);
 	delete character;
+	renderer->UnregisterModel(character2);
+	delete character2;
 
 	delete renderer;
 	glfwDestroyWindow(window);
