@@ -8,6 +8,9 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan\vulkan.h>
 
+#define MAX_OBJECT_RENDER 5
+#define MAX_BONE_COUNT 63
+
 class VulkanInstance;
 class VulkanDevice;
 class VulkanSwapchain;
@@ -31,13 +34,16 @@ struct UBOViewProj {
 
 struct UBOModel {
 	glm::mat4 model;
-	glm::mat4 bones[64];
+	glm::mat4 bones[MAX_BONE_COUNT];
 };
 
 class VulkanRenderer
 {
 	uint32_t width;
 	uint32_t height;
+
+	uint32_t renderCount = 0;
+	uint32_t dynamicAlignment = 256;
 
 	VulkanInstance* instance;
 	VkPhysicalDevice physicalDevice;
@@ -57,6 +63,9 @@ class VulkanRenderer
 
 	UBOViewProj* uboViewProj;
 	VulkanUniformBufferObject* vuboViewProj;
+
+	UBOModel* uboModel;
+	VulkanUniformBufferObject* vuboModel;
 
 	VulkanImageSampler* imageSmapler;
 

@@ -8,6 +8,8 @@
 #include <assimp\anim.h>
 #include <assimp\scene.h>
 
+#define MAX_BONE_COUNT 63
+
 struct Mesh;
 
 enum KeyFrameBitTypes

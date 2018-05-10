@@ -39,7 +39,7 @@ Animation::Animation(const aiAnimation * animation, const aiScene * scene)
 			nodesToVisit.push(std::make_pair(bone, node->mChildren[i]));
 	}
 
-	duration = animation->mDuration;
+	duration = (float)animation->mDuration;
 	tps = (float)(animation->mTicksPerSecond != 0 ? animation->mTicksPerSecond : 25.0f);
 }
 
@@ -94,21 +94,21 @@ Bone::Bone(aiNodeAnim* node, uint32_t id, Bone * parent) : name(node->mNodeName.
 	for (uint32_t i = 0; i < node->mNumPositionKeys; ++i)
 	{
 		auto key = node->mPositionKeys[i];
-		KeyFrame* keyFrame = GetOrCreateKeyFrame(key.mTime);
+		KeyFrame* keyFrame = GetOrCreateKeyFrame((float)key.mTime);
 		keyFrame->type |= KeyFrame_Translate;
 		keyFrame->translate = vec3(key.mValue);
 	}
 	for (uint32_t i = 0; i < node->mNumRotationKeys; ++i)
 	{
 		auto key = node->mRotationKeys[i];
-		KeyFrame* keyFrame = GetOrCreateKeyFrame(key.mTime);
+		KeyFrame* keyFrame = GetOrCreateKeyFrame((float)key.mTime);
 		keyFrame->type |= KeyFrame_Rotate;
 		keyFrame->rotate = fquat(key.mValue);
 	}
 	for (uint32_t i = 0; i < node->mNumScalingKeys; ++i)
 	{
 		auto key = node->mScalingKeys[i];
-		KeyFrame* keyFrame = GetOrCreateKeyFrame(key.mTime);
+		KeyFrame* keyFrame = GetOrCreateKeyFrame((float)key.mTime);
 		keyFrame->type |= KeyFrame_Scale;
 		keyFrame->scale = vec3(key.mValue);
 	}

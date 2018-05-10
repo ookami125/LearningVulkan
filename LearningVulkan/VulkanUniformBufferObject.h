@@ -12,11 +12,17 @@ class VulkanUniformBufferObject
 
 	VkBuffer uniformBuffer;
 	VkDeviceMemory uniformBufferMemory;
+
+	bool dynamic;
 public:
-	VulkanUniformBufferObject(VulkanDevice* device, VkPhysicalDevice* physicalDevice, size_t uboSize, void* ubo);
+	VulkanUniformBufferObject(VulkanDevice* device, VkPhysicalDevice* physicalDevice, size_t uboSize, void* ubo, bool dynamic = false);
 	~VulkanUniformBufferObject();
 
 	void Update();
 	VkBuffer GetBuffer();
-	size_t GetBufferSize();
+
+	void* GetUBO();
+	size_t GetUBOSize();
+
+	bool isDynamic();
 };

@@ -10,11 +10,13 @@
 
 VulkanDescriptorPool::VulkanDescriptorPool(VulkanDevice* device) : device(device)
 {
-	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
+	std::array<VkDescriptorPoolSize, 3> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = 3;
-	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = 1;
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	poolSizes[1].descriptorCount = 3;
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[2].descriptorCount = 1;
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -53,7 +55,7 @@ void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, u
 	VkDescriptorBufferInfo bufferInfo = {};
 	bufferInfo.buffer = uniformBufferObject->GetBuffer();
 	bufferInfo.offset = 0;
-	bufferInfo.range = uniformBufferObject->GetBufferSize();
+	bufferInfo.range = uniformBufferObject->GetUBOSize();
 
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -61,6 +63,8 @@ void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, u
 	descriptorWrites.dstBinding = binding;
 	descriptorWrites.dstArrayElement = 0;
 	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	if(uniformBufferObject->isDynamic())
+		descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 	descriptorWrites.descriptorCount = 1;
 	descriptorWrites.pBufferInfo = &bufferInfo;
 

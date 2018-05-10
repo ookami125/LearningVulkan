@@ -142,6 +142,7 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="VulkanCommandPool.cpp" />
     <ClCompile Include="VulkanDescriptorPool.cpp" />
