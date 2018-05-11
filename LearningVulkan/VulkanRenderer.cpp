@@ -60,7 +60,7 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 	dynamicAlignmentUBOModel = GetUBOAlignment(sizeof(UBOModel));
 	size_t bufferSizeUBOModel = MAX_OBJECT_RENDER * dynamicAlignmentUBOModel;
 	uboModel = (UBOModel*)alignedAlloc(bufferSizeUBOModel, dynamicAlignmentUBOModel);
-	vuboModel = new VulkanUniformBufferObject(device, &physicalDevice, bufferSizeUBOModel, uboModel, true);
+	vuboModel = new VulkanUniformBufferObject(device, &physicalDevice, dynamicAlignmentUBOModel, uboModel, MAX_OBJECT_RENDER, true);
 
 	//dynamicAlignmentUBOTextureIdx = GetUBOAlignment(sizeof(int));
 	//size_t bufferSizeUBOTexture = MAX_OBJECT_RENDER * dynamicAlignmentUBOTextureIdx;
@@ -72,6 +72,7 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 	descriptorSet = descriptorPool->AllocateDescriptorSet(descriptorSetLayout);
 	descriptorPool->UpdateDescriptorSets(descriptorSet, 0, vuboViewProj);
 	descriptorPool->UpdateDescriptorSets(descriptorSet, 1, vuboModel);
+	//descriptorPool->UpdateDescriptorSets(descriptorSet, 2, textures);
 	//descriptorPool->UpdateDescriptorSets(descriptorSet, 3, vuboTextures);
 
 	swapchain->InitFrameBuffers(renderPass);
@@ -94,6 +95,8 @@ VulkanRenderer::~VulkanRenderer()
 	vkDestroySemaphore(*device, imageAvailableSemaphore, nullptr);
 	delete commandPool;
 	delete descriptorPool;
+	delete vuboModel;
+	alignedFree(uboModel);
 	delete vuboViewProj;
 	delete uboViewProj;
 	delete pipeline;
@@ -190,7 +193,7 @@ void VulkanRenderer::RegisterModel(Model* model)
 
 	//((VulkanModelData*)model->rendererData)->ubo = new UBOModel();
 	//descriptorPool->UpdateDescriptorSets(descriptorSet, 1, ((VulkanModelData*)model->rendererData)->vubo);
-	descriptorPool->UpdateDescriptorSets(descriptorSet, 2, model->textures[0]); //TOF
+	descriptorPool->UpdateDescriptorSets(descriptorSet, 2, model->textures[0], 1);
 }
 
 void VulkanRenderer::UnregisterTexture(Texture * texture)

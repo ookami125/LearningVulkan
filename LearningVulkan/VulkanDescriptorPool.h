@@ -18,5 +18,5 @@ public:
 
 	VkDescriptorSet AllocateDescriptorSet(VulkanDescriptorSetLayout * descriptorSetLayout);
 	void UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, VulkanUniformBufferObject * uniformBufferObject);
-	void UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, Texture * texture);
+	void UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, Texture* texture, uint32_t count);
 };

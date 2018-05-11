@@ -16,7 +16,7 @@ VulkanDescriptorPool::VulkanDescriptorPool(VulkanDevice* device) : device(device
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 	poolSizes[1].descriptorCount = 3;
 	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[2].descriptorCount = 1;
+	poolSizes[2].descriptorCount = 2;
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -56,8 +56,6 @@ void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, u
 	bufferInfo.buffer = uniformBufferObject->GetBuffer();
 	bufferInfo.offset = 0;
 	bufferInfo.range = uniformBufferObject->GetUBOSize();
-	if (uniformBufferObject->isDynamic())
-		bufferInfo.range = 4096;
 
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -74,7 +72,7 @@ void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, u
 
 }
 
-void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, Texture* texture)
+void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, Texture* texture, uint32_t count)
 {
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -87,7 +85,7 @@ void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, u
 	descriptorWrites.dstBinding = binding;
 	descriptorWrites.dstArrayElement = 0;
 	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites.descriptorCount = 1;
+	descriptorWrites.descriptorCount = count;
 	descriptorWrites.pImageInfo = &imageInfo;
 
 	vkUpdateDescriptorSets(*device, 1, &descriptorWrites, 0, nullptr);

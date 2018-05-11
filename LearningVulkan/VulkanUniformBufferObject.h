@@ -13,15 +13,19 @@ class VulkanUniformBufferObject
 	VkBuffer uniformBuffer;
 	VkDeviceMemory uniformBufferMemory;
 
+	uint32_t count;
+
 	bool dynamic;
 public:
-	VulkanUniformBufferObject(VulkanDevice* device, VkPhysicalDevice* physicalDevice, size_t uboSize, void* ubo, bool dynamic = false);
+	VulkanUniformBufferObject(VulkanDevice* device, VkPhysicalDevice* physicalDevice, size_t uboSize, void* ubo, size_t count = 1, bool dynamic = false);
 	~VulkanUniformBufferObject();
 
 	void Update();
 	VkBuffer GetBuffer();
 
 	void* GetUBO();
+	size_t GetBufferSize();
+
 	size_t GetUBOSize();
 
 	bool isDynamic();

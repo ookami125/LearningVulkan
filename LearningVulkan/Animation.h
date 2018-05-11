@@ -8,7 +8,7 @@
 #include <assimp\anim.h>
 #include <assimp\scene.h>
 
-#define MAX_BONE_COUNT 63
+#define MAX_BONE_COUNT 62
 
 struct Mesh;
 

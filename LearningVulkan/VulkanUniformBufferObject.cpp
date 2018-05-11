@@ -2,13 +2,13 @@
 #include "VulkanDevice.h"
 #include "VulkanUtils.h"
 
-VulkanUniformBufferObject::VulkanUniformBufferObject(VulkanDevice * device, VkPhysicalDevice* physicalDevice, size_t uboSize, void * ubo, bool dynamic) : device(device), uboData(ubo), uboSize(uboSize), dynamic(dynamic)
+VulkanUniformBufferObject::VulkanUniformBufferObject(VulkanDevice * device, VkPhysicalDevice * physicalDevice, size_t uboSize, void * ubo, size_t count, bool dynamic) : device(device), uboData(ubo), uboSize(uboSize), count(count), dynamic(dynamic)
 {
 	uint32_t propertyFlags;
 	propertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 	//if(!dynamic)
-		propertyFlags |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-	createBuffer(device, physicalDevice, uboSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, propertyFlags, uniformBuffer, uniformBufferMemory);
+	propertyFlags |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	createBuffer(device, physicalDevice, uboSize * count, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, propertyFlags, uniformBuffer, uniformBufferMemory);
 }
 
 VulkanUniformBufferObject::~VulkanUniformBufferObject()
@@ -32,8 +32,8 @@ void VulkanUniformBufferObject::Update()
 	//else
 	//{
 		void* data;
-		vkMapMemory(*device, uniformBufferMemory, 0, uboSize, 0, &data);
-		memcpy(data, uboData, uboSize);
+		vkMapMemory(*device, uniformBufferMemory, 0, uboSize*count, 0, &data);
+		memcpy(data, uboData, uboSize*count);
 		vkUnmapMemory(*device, uniformBufferMemory);
 	//}
 }
@@ -41,6 +41,11 @@ void VulkanUniformBufferObject::Update()
 VkBuffer VulkanUniformBufferObject::GetBuffer()
 {
 	return uniformBuffer;
+}
+
+size_t VulkanUniformBufferObject::GetBufferSize()
+{
+	return uboSize * count;
 }
 
 size_t VulkanUniformBufferObject::GetUBOSize()

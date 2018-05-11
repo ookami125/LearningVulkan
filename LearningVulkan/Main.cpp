@@ -36,14 +36,9 @@ int main(int argc, char** argv)
 
 	Model* character = new Model("models/Box_Walk.fbx");
 	Model* character2 = new Model("models/Samba Dancing.fbx");
-	//character->LoadAnimations("models/Head Spinning.fbx");
 
 	renderer->RegisterModel(character);
 	renderer->RegisterModel(character2);
-
-	//std::thread animationThread(animationStuff, character);
-
-	//renderer->AllocShit(character->textures[0]);
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -54,9 +49,6 @@ int main(int argc, char** argv)
 		renderer->EndRender();
 		renderer->Present();
 	}
-
-	//stopping = true;
-	//animationThread.join();
 
 	renderer->UnregisterModel(character);
 	delete character;

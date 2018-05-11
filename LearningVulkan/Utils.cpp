@@ -1,5 +1,6 @@
 #include "Utils.h"
 #include <Windows.h>
+#include <stdint.h>
 
 float Q_rsqrt(float number)
 {
@@ -18,8 +19,21 @@ float Q_rsqrt(float number)
 	return y;
 }
 
+uint32_t nextPowerOfTwo(uint32_t v)
+{
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	v++;
+	return v;
+}
+
 void* alignedAlloc(size_t size, size_t alignment)
 {
+	if ((alignment & (alignment - 1)) != 0)
+		alignment = nextPowerOfTwo(alignment);
 	void *data = nullptr;
 	data = _aligned_malloc(size, alignment);
 	return data;

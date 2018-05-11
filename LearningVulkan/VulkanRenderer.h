@@ -9,7 +9,7 @@
 #include <vulkan\vulkan.h>
 
 #define MAX_OBJECT_RENDER 5
-#define MAX_BONE_COUNT 63
+#define MAX_BONE_COUNT 62
 
 class VulkanInstance;
 class VulkanDevice;
@@ -33,7 +33,9 @@ struct UBOViewProj {
 };
 
 struct UBOModel {
+	//uint32_t diffuseTexture;
 	glm::mat4 model;
+	glm::vec4 arrayIndex[4];
 	glm::mat4 bones[MAX_BONE_COUNT];
 };
 
@@ -44,7 +46,7 @@ class VulkanRenderer
 
 	uint32_t renderCount = 0;
 	uint32_t dynamicAlignmentUBOModel = 256;
-	uint32_t dynamicAlignmentUBOTextureIdx = 256;
+	//uint32_t dynamicAlignmentUBOTextureIdx = 256;
 
 	VulkanInstance* instance;
 	VkPhysicalDevice physicalDevice;

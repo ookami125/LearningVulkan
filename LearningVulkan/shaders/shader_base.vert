@@ -8,7 +8,8 @@ layout(binding = 0) uniform ViewProj {
 
 layout(binding = 1) uniform ModelData {
     mat4 model;
-	mat4 bones[63];
+	vec4 arrayIndex[4];
+	mat4 bones[62];
 } inModelData;
 
 
