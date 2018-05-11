@@ -56,6 +56,8 @@ void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, u
 	bufferInfo.buffer = uniformBufferObject->GetBuffer();
 	bufferInfo.offset = 0;
 	bufferInfo.range = uniformBufferObject->GetUBOSize();
+	if (uniformBufferObject->isDynamic())
+		bufferInfo.range = 4096;
 
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

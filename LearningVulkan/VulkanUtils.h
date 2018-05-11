@@ -21,3 +21,5 @@ bool HasStencilComponent(VkFormat format);
 VkCommandBuffer beginSingleTimeCommands(VulkanDevice* device, VulkanCommandPool* commandPool);
 
 void endSingleTimeCommands(VkCommandBuffer commandBuffer, VulkanDevice * device, VulkanCommandPool * commandPool);
+
+size_t GetUBOAlignment(size_t uboSize);

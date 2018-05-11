@@ -292,12 +292,3 @@ void Model::LoadAnimations(std::string filepath)
 
 	invTransform = glm::inverse(glm::make_mat4(&scene->mRootNode->mTransformation.a1));
 }
-
-
-
-
-
-
-
-
-

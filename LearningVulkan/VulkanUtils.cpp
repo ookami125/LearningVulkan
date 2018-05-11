@@ -142,3 +142,12 @@ void endSingleTimeCommands(VkCommandBuffer commandBuffer, VulkanDevice * device,
 
 	vkFreeCommandBuffers(*device, *commandPool, 1, &commandBuffer);
 }
+
+size_t GetUBOAlignment(size_t uboSize)
+{
+	size_t minUboAlignment = 256;
+	if (minUboAlignment > 0) {
+		uboSize = (uboSize + minUboAlignment - 1) & ~(minUboAlignment - 1);
+	}
+	return uboSize;
+}

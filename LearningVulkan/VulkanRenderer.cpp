@@ -54,24 +54,25 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 
 	pipeline = new VulkanPipeline(device, swapchain, shaderStage, renderPass, { descriptorSetLayout });
 
-	size_t minUboAlignment = 256;
-	dynamicAlignment = sizeof(UBOModel);
-	if (minUboAlignment > 0) {
-		dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
-	}
-
-	size_t bufferSize = MAX_OBJECT_RENDER * dynamicAlignment;
-	uboModel = (UBOModel*)alignedAlloc(bufferSize, dynamicAlignment);
-	vuboModel = new VulkanUniformBufferObject(device, &physicalDevice, bufferSize, uboModel, true);
-
 	uboViewProj = new UBOViewProj();
 	vuboViewProj = new VulkanUniformBufferObject(device, &physicalDevice, sizeof(UBOViewProj), uboViewProj);
+	
+	dynamicAlignmentUBOModel = GetUBOAlignment(sizeof(UBOModel));
+	size_t bufferSizeUBOModel = MAX_OBJECT_RENDER * dynamicAlignmentUBOModel;
+	uboModel = (UBOModel*)alignedAlloc(bufferSizeUBOModel, dynamicAlignmentUBOModel);
+	vuboModel = new VulkanUniformBufferObject(device, &physicalDevice, bufferSizeUBOModel, uboModel, true);
+
+	//dynamicAlignmentUBOTextureIdx = GetUBOAlignment(sizeof(int));
+	//size_t bufferSizeUBOTexture = MAX_OBJECT_RENDER * dynamicAlignmentUBOTextureIdx;
+	//uboTextures = (int*)alignedAlloc(bufferSizeUBOTexture, dynamicAlignmentUBOTextureIdx);
+	//vuboTextures = new VulkanUniformBufferObject(device, &physicalDevice, bufferSizeUBOTexture, uboTextures, true);
 
 	descriptorPool = new VulkanDescriptorPool(device);
 
 	descriptorSet = descriptorPool->AllocateDescriptorSet(descriptorSetLayout);
 	descriptorPool->UpdateDescriptorSets(descriptorSet, 0, vuboViewProj);
 	descriptorPool->UpdateDescriptorSets(descriptorSet, 1, vuboModel);
+	//descriptorPool->UpdateDescriptorSets(descriptorSet, 3, vuboTextures);
 
 	swapchain->InitFrameBuffers(renderPass);
 	commandPool = new VulkanCommandPool(&physicalDevice, device, instance);
@@ -160,8 +161,8 @@ void VulkanRenderer::RegisterMesh(Mesh* mesh)
 
 void VulkanRenderer::UnregisterModel(Model* model)
 {
-	delete ((VulkanModelData*)model->rendererData)->vubo;
-	delete ((VulkanModelData*)model->rendererData)->ubo;
+	//delete ((VulkanModelData*)model->rendererData)->vubo;
+	//delete ((VulkanModelData*)model->rendererData)->ubo;
 	free(model->rendererData);
 
 	for (Mesh* mesh : model->meshes)
@@ -237,7 +238,7 @@ void VulkanRenderer::RegisterTexture(Texture* texture)
 void VulkanRenderer::RenderMesh(Mesh* mesh)
 {
 	vkCmdBindPipeline(activeCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline);
-	uint32_t dynamicOffset = renderCount * static_cast<uint32_t>(dynamicAlignment);
+	uint32_t dynamicOffset = renderCount * static_cast<uint32_t>(dynamicAlignmentUBOModel);
 	vkCmdBindDescriptorSets(activeCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 0, 1, &descriptorSet, 1, &dynamicOffset);
 	VkBuffer vertexBuffers[] = { ((VulkanMeshData*)mesh->rendererData)->vertexBuffer };
 	VkDeviceSize offsets[] = { 0 };
@@ -249,18 +250,16 @@ void VulkanRenderer::RenderMesh(Mesh* mesh)
 void VulkanRenderer::RenderModel(Model* model)
 {
 	static auto startTime = std::chrono::high_resolution_clock::now();
-
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 	auto animFrame = model->GetAnimationFrame(0, 0, time);
 	memcpy(uboModel[renderCount].bones, animFrame.data(), sizeof(glm::mat4) * std::min((size_t)MAX_BONE_COUNT, animFrame.size()));
-
 	uboModel[renderCount].model = glm::rotate(glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(0.2f)), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	vuboModel->Update();
 
 	for (Mesh* mesh : model->meshes)
 		RenderMesh(mesh);
-	printf("renderCount: %d\n", renderCount);
+	//printf("renderCount: %d\n", renderCount);
 	renderCount += 1;
 }
 

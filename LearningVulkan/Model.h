@@ -2,6 +2,7 @@
 #include <vector>
 #include <glm\glm.hpp>
 #include <map>
+#include <thread>
 
 struct Texture;
 struct Vertex;
@@ -49,7 +50,6 @@ struct Model
 	std::vector<Animation*> animations;
 	glm::mat4 invTransform;
 	void* rendererData;
-
 public:
 	Model(std::string filepath);
 

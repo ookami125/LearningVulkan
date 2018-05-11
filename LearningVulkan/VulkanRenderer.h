@@ -43,7 +43,8 @@ class VulkanRenderer
 	uint32_t height;
 
 	uint32_t renderCount = 0;
-	uint32_t dynamicAlignment = 256;
+	uint32_t dynamicAlignmentUBOModel = 256;
+	uint32_t dynamicAlignmentUBOTextureIdx = 256;
 
 	VulkanInstance* instance;
 	VkPhysicalDevice physicalDevice;
@@ -67,6 +68,9 @@ class VulkanRenderer
 	UBOModel* uboModel;
 	VulkanUniformBufferObject* vuboModel;
 
+	int* uboTextures;
+	VulkanUniformBufferObject* vuboTextures;
+
 	VulkanImageSampler* imageSmapler;
 
 	VkSemaphore imageAvailableSemaphore;
@@ -74,8 +78,6 @@ class VulkanRenderer
 public:
 	VulkanRenderer(HWND hwnd);
 	~VulkanRenderer();
-
-	void AllocShit(Texture* texture);
 
 	void UnregisterMesh(Mesh * mesh);
 	void RegisterMesh(Mesh * mesh);
