@@ -8,6 +8,8 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan\vulkan.h>
 
+#include <vector>
+
 #define MAX_OBJECT_RENDER 5
 #define MAX_BONE_COUNT 62
 
@@ -20,6 +22,7 @@ class VulkanPipeline;
 class VulkanRenderPass;
 class VulkanCommandPool;
 class VulkanUniformBufferObject;
+class VulkanDynamicUBO;
 class VulkanDescriptorSetLayout;
 class VulkanDescriptorPool;
 class VulkanImageSampler;
@@ -35,7 +38,7 @@ struct UBOViewProj {
 struct UBOModel {
 	//uint32_t diffuseTexture;
 	glm::mat4 model;
-	glm::vec4 arrayIndex[4];
+	glm::vec4 arrayIndex;
 	glm::mat4 bones[MAX_BONE_COUNT];
 };
 
@@ -45,7 +48,7 @@ class VulkanRenderer
 	uint32_t height;
 
 	uint32_t renderCount = 0;
-	uint32_t dynamicAlignmentUBOModel = 256;
+	//uint32_t dynamicAlignmentUBOModel = 256;
 	//uint32_t dynamicAlignmentUBOTextureIdx = 256;
 
 	VulkanInstance* instance;
@@ -62,13 +65,13 @@ class VulkanRenderer
 	VulkanDescriptorSetLayout* descriptorSetLayout;
 
 	VulkanDescriptorPool* descriptorPool;
-	VkDescriptorSet descriptorSet;
+	std::vector<VkDescriptorSet> descriptorSets;
 
 	UBOViewProj* uboViewProj;
 	VulkanUniformBufferObject* vuboViewProj;
 
-	UBOModel* uboModel;
-	VulkanUniformBufferObject* vuboModel;
+	//UBOModel* uboModel;
+	VulkanDynamicUBO* vuboModel;
 
 	int* uboTextures;
 	VulkanUniformBufferObject* vuboTextures;

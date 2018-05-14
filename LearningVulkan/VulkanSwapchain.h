@@ -38,6 +38,8 @@ public:
 	VkFormat GetImageFormat();
 
 	void NextFrame();
+	uint32_t GetFrameCount();
+	uint32_t GetCurrentFrameIndex();
 	VkCommandBuffer GetNextCommandBuffer();
 	VkFramebuffer GetNextFrameBuffer();
 	VulkanImage* GetImage(uint32_t idx);

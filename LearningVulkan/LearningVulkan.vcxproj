@@ -148,6 +148,7 @@
     <ClCompile Include="VulkanDescriptorPool.cpp" />
     <ClCompile Include="VulkanDescriptorSetLayout.cpp" />
     <ClCompile Include="VulkanDevice.cpp" />
+    <ClCompile Include="VulkanDynamicUBO.cpp" />
     <ClCompile Include="VulkanException.cpp" />
     <ClCompile Include="VulkanImage.cpp" />
     <ClCompile Include="VulkanImageSampler.cpp" />
@@ -164,6 +165,7 @@
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AssimpUtils.h" />
+    <ClInclude Include="VulkanDynamicUBO.h" />
     <ClInclude Include="VulkanImageSampler.h" />
     <ClInclude Include="VulkanTextureData.h" />
     <ClInclude Include="VulkanCommandPool.h" />

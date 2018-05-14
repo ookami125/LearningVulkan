@@ -2,13 +2,10 @@
 #include "VulkanDevice.h"
 #include "VulkanUtils.h"
 
-VulkanUniformBufferObject::VulkanUniformBufferObject(VulkanDevice * device, VkPhysicalDevice * physicalDevice, size_t uboSize, void * ubo, size_t count, bool dynamic) : device(device), uboData(ubo), uboSize(uboSize), count(count), dynamic(dynamic)
+VulkanUniformBufferObject::VulkanUniformBufferObject(VulkanDevice * device, VkPhysicalDevice * physicalDevice, size_t uboSize, void * ubo) : device(device), uboData(ubo), uboSize(uboSize)
 {
-	uint32_t propertyFlags;
-	propertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-	//if(!dynamic)
-	propertyFlags |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-	createBuffer(device, physicalDevice, uboSize * count, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, propertyFlags, uniformBuffer, uniformBufferMemory);
+	uint32_t propertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	createBuffer(device, physicalDevice, uboSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, propertyFlags, uniformBuffer, uniformBufferMemory);
 }
 
 VulkanUniformBufferObject::~VulkanUniformBufferObject()
@@ -19,23 +16,10 @@ VulkanUniformBufferObject::~VulkanUniformBufferObject()
 
 void VulkanUniformBufferObject::Update()
 {
-	//if(dynamic)
-	//{
-	//	VkMappedMemoryRange memoryRange = {};
-	//	memoryRange.pNext = nullptr;
-	//	memoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-	//	memoryRange.offset = 0;
-	//	memoryRange.memory = uniformBufferMemory;
-	//	memoryRange.size = VK_WHOLE_SIZE;
-	//	vkFlushMappedMemoryRanges(*device, 1, &memoryRange);
-	//}
-	//else
-	//{
-		void* data;
-		vkMapMemory(*device, uniformBufferMemory, 0, uboSize*count, 0, &data);
-		memcpy(data, uboData, uboSize*count);
-		vkUnmapMemory(*device, uniformBufferMemory);
-	//}
+	void* data;
+	vkMapMemory(*device, uniformBufferMemory, 0, uboSize, 0, &data);
+	memcpy(data, uboData, uboSize);
+	vkUnmapMemory(*device, uniformBufferMemory);
 }
 
 VkBuffer VulkanUniformBufferObject::GetBuffer()
@@ -45,17 +29,7 @@ VkBuffer VulkanUniformBufferObject::GetBuffer()
 
 size_t VulkanUniformBufferObject::GetBufferSize()
 {
-	return uboSize * count;
-}
-
-size_t VulkanUniformBufferObject::GetUBOSize()
-{
 	return uboSize;
-}
-
-bool VulkanUniformBufferObject::isDynamic()
-{
-	return dynamic;
 }
 
 void * VulkanUniformBufferObject::GetUBO()

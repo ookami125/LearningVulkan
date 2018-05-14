@@ -213,6 +213,16 @@ void VulkanSwapchain::NextFrame()
 		frameCounter = 0;
 }
 
+uint32_t VulkanSwapchain::GetFrameCount()
+{
+	return commandBuffers.size();
+}
+
+uint32_t VulkanSwapchain::GetCurrentFrameIndex()
+{
+	return frameCounter;
+}
+
 VkCommandBuffer VulkanSwapchain::GetNextCommandBuffer()
 {
 	return commandBuffers[frameCounter];
