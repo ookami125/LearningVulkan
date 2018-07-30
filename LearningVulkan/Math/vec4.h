@@ -41,7 +41,7 @@ struct alignas(16) Vec4f
 
 	__forceinline void Load(float x, float y, float z, float w)
 	{
-		data = _mm_set_ps(w, x, y, z);
+		data = _mm_set_ps(w, z, y, x);
 	}
 
 	__forceinline void Store(float* x, float* y, float* z, float* w) const

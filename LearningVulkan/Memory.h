@@ -2,6 +2,8 @@
 
 #define aligned_new(x) new ((x*)_aligned_malloc(sizeof(x), alignof(x))) x
 
+#define aligned_delete(x) _aligned_free(x);
+
 #include <stdlib.h>
 #include <malloc.h>
 

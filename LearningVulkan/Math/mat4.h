@@ -90,6 +90,13 @@ union alignas(32) Mat4f
 		return r;
 	}
 
+	Mat4f Transpose()
+	{
+		Mat4f temp = Mat4f(row);
+		_MM_TRANSPOSE4_PS(temp.row[0], temp.row[1], temp.row[2], temp.row[3]);
+		return temp;
+	}
+
 	__forceinline Mat4f operator*(const Mat4f rhs) const
 	{
 		Mat4f temp;

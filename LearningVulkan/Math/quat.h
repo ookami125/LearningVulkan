@@ -19,7 +19,7 @@ union alignas(16) Quatf
 		Load(x);
 	}
 
-	__forceinline Quatf(float x, float y, float z, float w)
+	__forceinline Quatf(float w, float x, float y, float z)
 	{
 		Load(w, x, y, z);
 	}

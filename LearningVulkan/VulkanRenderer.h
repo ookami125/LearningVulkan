@@ -34,8 +34,8 @@ struct alignas(32) UBOViewProj {
 struct alignas(32) UBOModel {
 	//uint32_t diffuseTexture;
 	Mat4f model;
-	Vec4f arrayIndex;
 	Mat4f bones[MAX_BONE_COUNT];
+	Vec4f arrayIndex;
 };
 
 class VulkanRenderer

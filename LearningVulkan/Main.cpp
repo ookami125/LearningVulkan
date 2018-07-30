@@ -53,9 +53,9 @@ int main(int argc, char** argv)
 	}
 	
 	renderer->UnregisterModel(character);
-	delete character;
+	aligned_delete(character);
 	renderer->UnregisterModel(character2);
-	delete character2;
+	aligned_delete(character2);
 	
 	delete renderer;
 	glfwDestroyWindow(window);

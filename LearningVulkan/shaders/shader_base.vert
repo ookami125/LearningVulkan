@@ -8,14 +8,14 @@ layout(binding = 0) uniform ViewProj {
 
 layout(binding = 1) uniform ModelData {
     mat4 model;
-	vec4 arrayIndex;
 	mat4 bones[62];
+	vec4 arrayIndex;
 } inModelData;
 
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inColor;
-layout(location = 2) in vec2 inTexCoord;
+layout(location = 0) in vec4 inPosition;
+layout(location = 1) in vec4 inColor;
+layout(location = 2) in vec4 inTexCoord;
 layout(location = 3) in uvec4 inBoneIdx;
 layout(location = 4) in vec4 inBoneWeight;
 
@@ -41,11 +41,12 @@ void main() {
 	boneTransform     += inModelData.bones[inBoneIdx.w] * inBoneWeight.w;	
 	
 	gl_Position = inViewProj.proj * inViewProj.view * inModelData.model * boneTransform * vec4(inPosition.xyz, 1.0);
+	//gl_Position /= gl_Position.w;
 
     vec3 color1 = hsv2rgb(vec3(float(inBoneIdx.x)/5.0, 1.0, 1.0)) * inBoneWeight.x;
     vec3 color2 = hsv2rgb(vec3(float(inBoneIdx.y)/5.0, 1.0, 1.0)) * inBoneWeight.y;
     vec3 color3 = hsv2rgb(vec3(float(inBoneIdx.z)/5.0, 1.0, 1.0)) * inBoneWeight.z;
     vec3 color4 = hsv2rgb(vec3(float(inBoneIdx.w)/5.0, 1.0, 1.0)) * inBoneWeight.w;
     fragColor = color1+color2+color3+color4;
-    fragTexCoord = inTexCoord;
+    fragTexCoord = inTexCoord.xy;
 }

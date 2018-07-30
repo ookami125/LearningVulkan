@@ -5,6 +5,7 @@
 #include "GLMAssimp.h"
 #include "Model.h"
 #include "Memory.h"
+#include "MathUtils.h"
 
 Animation::Animation(const aiAnimation * animation, const aiScene * scene)
 {
@@ -195,11 +196,14 @@ Mat4f Bone::GetMatrix(float time)
 
 Mat4f KeyFrame::getMatrix()
 {
+	Mat4f translate = MathUtils::translate(this->translate).Transpose();
 	//Mat4f translate = glm::transpose(glm::translate(Mat4f(1.0), this->translate));
+	Mat4f rotate = MathUtils::rotation(this->rotate).Transpose();
 	//Mat4f rotate    = glm::transpose(Mat4f_cast(this->rotate));
+	Mat4f scale = MathUtils::scale(this->scale).Transpose();
 	//Mat4f scale     = glm::transpose(glm::scale(Mat4f(1.0), this->scale));
-	//Mat4f result = scale * rotate * translate;
-	return Mat4f(1);// result;
+	Mat4f result = scale * rotate * translate;
+	return result;
 }
 
 KeyFrame KeyFrame::lerp(KeyFrame * kf, float ratio)
