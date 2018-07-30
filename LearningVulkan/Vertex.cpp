@@ -1,6 +1,4 @@
 #include "Vertex.h"
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/hash.hpp>
 
 VkVertexInputBindingDescription Vertex::getBindingDescription()
 {
@@ -49,10 +47,33 @@ bool Vertex::operator==(const Vertex & other) const
 	return pos == other.pos && color == other.color && texCoord == other.texCoord && bonesIdx == other.bonesIdx && bonesWeights == other.bonesWeights;
 }
 
+void hash_combine(size_t &seed, size_t hash)
+{
+	hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	seed ^= hash;
+}
+
 namespace std {
+	template<> struct hash<Vec4f> {
+		size_t operator()(Vec4f const& vec) const {
+
+			size_t seed = 0;
+			float data[4]; vec.Store(data);
+			hash_combine(seed, hash<float>()(data[0]));
+			hash_combine(seed, hash<float>()(data[1]));
+			hash_combine(seed, hash<float>()(data[2]));
+			hash_combine(seed, hash<float>()(data[3]));
+			return seed;
+		}
+	};
+
 	template<> struct hash<Vertex> {
 		size_t operator()(Vertex const& vertex) const {
-			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+			size_t seed = 0;
+			hash_combine(seed, hash<Vec4f>()(vertex.pos));
+			hash_combine(seed, hash<Vec4f>()(vertex.color));
+			hash_combine(seed, hash<Vec4f>()(vertex.texCoord));
+			return seed;
 		}
 	};
 }

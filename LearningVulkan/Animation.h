@@ -3,8 +3,11 @@
 #include <vector>
 #include <set>
 #include <unordered_set>
-#include <glm\glm.hpp>
-#include <glm\gtc\quaternion.hpp>
+//#include <glm\glm.hpp>
+//#include <glm\gtc\quaternion.hpp>
+#include "Math/vec4.h"
+#include "Math/mat4.h"
+#include "Math/quat.h"
 #include <assimp\anim.h>
 #include <assimp\scene.h>
 
@@ -19,15 +22,15 @@ enum KeyFrameBitTypes
 	KeyFrame_Scale = 4,
 };
 
-struct KeyFrame
+struct alignas(16) KeyFrame
 {
+	Vec4f translate = Vec4f(0);
+	Quatf rotate = Quatf();
+	Vec4f scale = Vec4f(1);
 	uint8_t type = 0;
 	KeyFrame* next = nullptr;
 	float time;
-	glm::vec3 translate = glm::vec3(0);
-	glm::fquat rotate = glm::fquat();
-	glm::vec3 scale = glm::vec3(1);
-	glm::mat4 getMatrix();
+	Mat4f getMatrix();
 
 	KeyFrame() = default;
 	KeyFrame(float time) : time(time) {};
@@ -35,26 +38,26 @@ struct KeyFrame
 	KeyFrame lerp(KeyFrame* kf, float ratio);
 };
 
-class Bone
+class alignas(32) Bone
 {
 	std::string name;
 	uint32_t id;
 	Bone* parent = nullptr;
-	glm::mat4 offset;
+	Mat4f offset;
 	std::vector<float> times;
-	std::map<float, KeyFrame> keyFrames;
+	std::map<float, KeyFrame*> keyFrames;
 	KeyFrame * GetOrCreateKeyFrame(float time);
 public:
 	Bone(aiNodeAnim* node, uint32_t id, Bone* parent);
 
 	inline uint32_t GetID();
 	inline Bone* GetParent();
-	inline glm::mat4 GetOffset();
+	inline Mat4f GetOffset();
 	inline std::string GetName();
 
 	KeyFrame * GetPrevFrameToTime(float time);
 
-	glm::mat4 GetMatrix(float time);
+	Mat4f GetMatrix(float time);
 };
 
 class Animation
@@ -70,5 +73,5 @@ public:
 
 	std::string GetBoneName(int i);
 
-	void GetAnimationFrame(std::vector<glm::mat4*> boneMap, float time);
+	void GetAnimationFrame(std::vector<Mat4f*> boneMap, float time);
 };

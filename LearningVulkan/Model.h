@@ -1,18 +1,21 @@
 #pragma once
 #include <vector>
-#include <glm\glm.hpp>
+//#include <glm\glm.hpp>
+#include "Math/vec4.h"
+#include "Math/mat4.h"
 #include <map>
 #include <thread>
+#include "Memory.h"
 
 struct Texture;
 struct Vertex;
 class Animation;
 class SkinnedMesh;
 
-struct Material
+struct alignas(16) Material
 {
 	std::string name;
-	glm::vec3 diffuseColor;
+	Vec4f diffuseColor;
 	std::vector<Texture*> diffuse;
 	std::vector<Texture*> specular;
 	std::vector<Texture*> ambient;
@@ -26,7 +29,7 @@ struct Material
 	std::vector<Texture*> reflection;
 };
 
-struct Mesh
+struct alignas(32) Mesh
 {
 	Material* mat;
 	uint32_t vertices_count;
@@ -34,26 +37,26 @@ struct Mesh
 	uint32_t indices_count;
 	uint32_t* indices;
 	std::vector<std::string> boneNames;
-	std::vector<glm::mat4> boneOffsets;
-	std::vector<glm::mat4> bones;
-	std::vector<std::vector<glm::mat4*>> boneMaps;
-	glm::mat4 garbage;
+	std::vector<Mat4f, AlignmentAllocator<Mat4f>> boneOffsets;
+	std::vector<Mat4f, AlignmentAllocator<Mat4f>> bones;
+	std::vector<std::vector<Mat4f*>> boneMaps;
+	Mat4f garbage;
 
 	void* rendererData = nullptr;
 };
 
-struct Model
+struct alignas(32) Model
 {
+	Mat4f invTransform;
 	std::vector<Texture*> textures;
 	std::vector<Material*> materials;
 	std::vector<Mesh*> meshes;
 	std::vector<Animation*> animations;
-	glm::mat4 invTransform;
 	void* rendererData;
 public:
 	Model(std::string filepath);
 
-	std::vector<glm::mat4> GetAnimationFrame(int animationID, int meshID, double time);
+	std::vector<Mat4f, AlignmentAllocator<Mat4f>> GetAnimationFrame(int animationID, int meshID, double time);
 
 	void LoadAnimations(std::string filepath);
 };

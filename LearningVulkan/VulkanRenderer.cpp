@@ -24,6 +24,7 @@
 #include "Utils.h"
 #include <vector>
 #include <chrono>
+#include "Memory.h"
 
 VulkanRenderer::VulkanRenderer(HWND hwnd)
 {
@@ -55,7 +56,7 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 
 	pipeline = new VulkanPipeline(device, swapchain, shaderStage, renderPass, { descriptorSetLayout });
 
-	uboViewProj = new UBOViewProj();
+	uboViewProj = aligned_new(UBOViewProj)();
 	vuboViewProj = new VulkanUniformBufferObject(device, &physicalDevice, sizeof(UBOViewProj), uboViewProj);
 	vuboModel = new VulkanDynamicUBO(device, &physicalDevice, sizeof(UBOModel), MAX_OBJECT_RENDER);
 	
@@ -254,8 +255,8 @@ void VulkanRenderer::RenderModel(Model* model)
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 	auto animFrame = model->GetAnimationFrame(0, 0, time);
 	UBOModel* uboModel = (UBOModel*)vuboModel->GetUBO(renderCount);
-	memcpy(uboModel->bones, animFrame.data(), sizeof(glm::mat4) * std::min((size_t)MAX_BONE_COUNT, animFrame.size()));
-	uboModel->model = glm::rotate(glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(0.2f)), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	memcpy(uboModel->bones, animFrame.data(), sizeof(Mat4f) * std::min((size_t)MAX_BONE_COUNT, animFrame.size()));
+	uboModel->model = Mat4f(1);// glm::rotate(glm::rotate(glm::scale(Mat4f(1.0f), glm::vec3(0.2f)), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	vuboModel->Update(renderCount);
 
 	for (Mesh* mesh : model->meshes)
@@ -269,9 +270,9 @@ void VulkanRenderer::StartRender()
 	renderCount = 0;
 	swapchain->NextFrame();
 
-	uboViewProj->view = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	uboViewProj->proj = glm::perspective(glm::radians(45.0f), width / (float)height, 0.1f, 100.0f);
-	uboViewProj->proj[1][1] *= -1;
+	uboViewProj->view = Mat4f(1);//glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	uboViewProj->proj = Mat4f(1);//glm::perspective(glm::radians(45.0f), width / (float)height, 0.1f, 100.0f);
+	//uboViewProj->proj[1][1] *= -1;
 	vuboViewProj->Update();
 
 	activeCommandBuffer = swapchain->GetNextCommandBuffer();

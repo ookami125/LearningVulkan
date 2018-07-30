@@ -1,14 +1,14 @@
 #pragma once
 #include <vulkan\vulkan.h>
-#include <glm\glm.hpp>
+#include "Math/vec4.h"
 #include <array>
 
 struct Vertex {
-	glm::vec3 pos;
-	glm::vec3 color;
-	glm::vec2 texCoord;
-	glm::uvec4 bonesIdx;
-	glm::vec4 bonesWeights;
+	Vec4f pos;
+	Vec4f color;
+	Vec4f texCoord;
+	Vec4f bonesIdx;
+	Vec4f bonesWeights;
 
 	static VkVertexInputBindingDescription getBindingDescription();
 	static std::array<VkVertexInputAttributeDescription, 5> getAttributeDescriptions();

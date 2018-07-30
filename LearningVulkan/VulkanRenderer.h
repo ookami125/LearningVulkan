@@ -1,13 +1,9 @@
 #pragma once
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan\vulkan.h>
-
+#include "Math/mat4.h"
+#include "Math/vec4.h"
 #include <vector>
 
 #define MAX_OBJECT_RENDER 5
@@ -30,16 +26,16 @@ struct Model;
 struct Mesh;
 struct Texture;
 
-struct UBOViewProj {
-	glm::mat4 view;
-	glm::mat4 proj;
+struct alignas(32) UBOViewProj {
+	Mat4f view;
+	Mat4f proj;
 };
 
-struct UBOModel {
+struct alignas(32) UBOModel {
 	//uint32_t diffuseTexture;
-	glm::mat4 model;
-	glm::vec4 arrayIndex;
-	glm::mat4 bones[MAX_BONE_COUNT];
+	Mat4f model;
+	Vec4f arrayIndex;
+	Mat4f bones[MAX_BONE_COUNT];
 };
 
 class VulkanRenderer

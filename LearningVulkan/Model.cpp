@@ -2,13 +2,11 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm\gtx\component_wise.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include "GLMAssimp.h"
 #include "Vertex.h"
 #include "ResourceManager.h"
 #include "Animation.h"
+#include "Memory.h"
 
 Model::Model(std::string filepath)
 {
@@ -35,7 +33,7 @@ Model::Model(std::string filepath)
 		int numMaterials = scene->mNumMaterials;
 		for (int i = 0; i < numMaterials; ++i)
 		{
-			Material* mat = new Material();
+			Material* mat = aligned_new(Material)();
 			auto material = scene->mMaterials[i];
 
 			aiString name;
@@ -132,7 +130,7 @@ Model::Model(std::string filepath)
 			auto mesh = scene->mMeshes[i];
 
 			auto materialIdx = mesh->mMaterialIndex;
-			Mesh* meshP = new Mesh();
+			Mesh* meshP = aligned_new(Mesh)();
 			meshP->mat = materials[materialIdx];
 
 			if (mesh->HasFaces())
@@ -159,10 +157,10 @@ Model::Model(std::string filepath)
 				{
 					Vertex Vert;
 					Vert.pos = vec3(mesh->mVertices[j]);
-					Vert.color = (mesh->HasVertexColors(0)) ? (glm::vec3)vec4(mesh->mColors[0][j]) : glm::vec3(1);
-					Vert.texCoord = (mesh->HasTextureCoords(0)) ? (glm::vec2)vec3(mesh->mTextureCoords[0][j]) : glm::vec2{ 0, 0 };
-					Vert.bonesIdx = glm::uvec4(0);
-					Vert.bonesWeights = glm::vec4(0);
+					Vert.color = (mesh->HasVertexColors(0)) ? vec3(mesh->mColors[0][j]) : Vec4f(1, 1, 1, NAN);
+					Vert.texCoord = (mesh->HasTextureCoords(0)) ? vec2(mesh->mTextureCoords[0][j]) : Vec4f(1, 1, NAN, NAN);
+					Vert.bonesIdx = Vec4f(0);
+					Vert.bonesWeights = Vec4f(0);
 					vertices.push_back(Vert);
 				}
 				meshP->vertices = (Vertex*)malloc(sizeof(Vertex) * vertices.size());
@@ -173,7 +171,7 @@ Model::Model(std::string filepath)
 			if (mesh->HasBones())
 			{
 				//printf("mesh bones:\n");
-				//meshP->boneOffsets = (glm::mat4*)malloc(sizeof(glm::mat4) * mesh->mNumBones);
+				//meshP->boneOffsets = (Mat4f*)malloc(sizeof(Mat4f) * mesh->mNumBones);
 				for (uint32_t j = 0; j < mesh->mNumBones; ++j)
 				{
 					auto bone = mesh->mBones[j];
@@ -181,30 +179,37 @@ Model::Model(std::string filepath)
 					//printf("checking %s...\n", boneName.c_str());
 					
 					meshP->boneNames.push_back(boneName);
-					meshP->boneOffsets.push_back(glm::transpose(glm::make_mat4(&bone->mOffsetMatrix.a1)));
+					meshP->boneOffsets.push_back(mat4(bone->mOffsetMatrix));
 					for (uint32_t k = 0; k < bone->mNumWeights; ++k)
 					{
 						auto weight = bone->mWeights[k];
 
-						uint32_t boneIdx = j;
+						float boneIdx = (float)j;
 						float boneWeight = weight.mWeight;
 						//printf("%d\n", weight.mVertexId);
 						Vertex& vertex = meshP->vertices[weight.mVertexId];
+						float bonesIdx[4];
+						vertex.bonesIdx.Store(bonesIdx);
+						float bonesWeights[4];
+						vertex.bonesWeights.Store(bonesWeights);
+						
 						for (int l = 0; l < 4; ++l)
 						{
-							if (vertex.bonesWeights[l] < weight.mWeight)
+							if (bonesWeights[l] < weight.mWeight)
 							{
-								std::swap(vertex.bonesIdx[l], boneIdx);
-								std::swap(vertex.bonesWeights[l], boneWeight);
+								std::swap(bonesIdx[l], boneIdx);
+								std::swap(bonesWeights[l], boneWeight);
 							}
 						}
+						vertex.bonesIdx.Load(bonesIdx[0], bonesIdx[1], bonesIdx[2], bonesIdx[3]);
+						vertex.bonesWeights.Load(bonesWeights[0], bonesWeights[1], bonesWeights[2], bonesWeights[3]);
 					}
 				}
 
 				for (uint32_t j = 0; j < meshP->vertices_count; ++j)
 				{
-					float total = glm::compAdd(meshP->vertices[j].bonesWeights);
-					meshP->vertices[j].bonesWeights *= glm::vec4(1.0f / total);
+					float total = meshP->vertices[j].bonesWeights.compSum();
+					meshP->vertices[j].bonesWeights *= Vec4f(1.0f / total);
 				}
 
 				meshP->bones.resize(mesh->mNumBones);
@@ -213,7 +218,7 @@ Model::Model(std::string filepath)
 				for (Animation* anim : animations)
 				{
 					auto layout = anim->GetLayout();
-					std::vector<glm::mat4*> boneMap;
+					std::vector<Mat4f*> boneMap;
 					for (auto name : layout)
 					{
 						auto found = std::find(meshP->boneNames.begin(), meshP->boneNames.end(), name);
@@ -232,17 +237,17 @@ Model::Model(std::string filepath)
 		}
 	}
 
-	invTransform = glm::inverse(glm::make_mat4(&scene->mRootNode->mTransformation.a1));
+	invTransform = mat4(scene->mRootNode->mTransformation).Inverse();
 }
 
-std::vector<glm::mat4> Model::GetAnimationFrame(int animationID, int meshID, double time)
+std::vector<Mat4f, AlignmentAllocator<Mat4f>> Model::GetAnimationFrame(int animationID, int meshID, double time)
 {
 	//time = 5.31e-5;
 	auto mesh = meshes[meshID];
 	animations[animationID]->GetAnimationFrame(mesh->boneMaps[animationID], (float)time);
 	auto bones = mesh->bones;
 	for (uint32_t i = 0; i < bones.size(); ++i)
-		bones[i] = glm::transpose(bones[i]) * mesh->boneOffsets[i];
+		bones[i] = bones[i] * mesh->boneOffsets[i];
 	return bones;
 }
 
@@ -273,7 +278,7 @@ void Model::LoadAnimations(std::string filepath)
 			for (Animation* anim : anims)
 			{
 				auto layout = anim->GetLayout();
-				std::vector<glm::mat4*> boneMap;
+				std::vector<Mat4f*> boneMap;
 				for (auto name : layout)
 				{
 					auto found = std::find(mesh->boneNames.begin(), mesh->boneNames.end(), name);
@@ -290,5 +295,5 @@ void Model::LoadAnimations(std::string filepath)
 		}
 	}
 
-	invTransform = glm::inverse(glm::make_mat4(&scene->mRootNode->mTransformation.a1));
+	invTransform = mat4(scene->mRootNode->mTransformation).Inverse();
 }

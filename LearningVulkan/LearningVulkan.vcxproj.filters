@@ -31,6 +31,9 @@
     <Filter Include="Header Files\Vulkan\RendererData">
       <UniqueIdentifier>{fdb573b9-cec5-4b79-a286-6b6deb43a1f2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Math">
+      <UniqueIdentifier>{97449a0f-00f8-4aca-adb4-2a24cd57627a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -191,6 +194,21 @@
     <ClInclude Include="VulkanDynamicUBO.h">
       <Filter>Header Files\Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="Math\mat4.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\swizzle.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\vec4.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\quat.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader_base.frag">
@@ -200,6 +218,15 @@
       <Filter>Resource Files\shaders</Filter>
     </None>
     <None Include="models\ybotSambaDancing.fbx">
+      <Filter>Resource Files\models</Filter>
+    </None>
+    <None Include="models\Box_Walk.fbx">
+      <Filter>Resource Files\models</Filter>
+    </None>
+    <None Include="models\Head Spinning.fbx">
+      <Filter>Resource Files\models</Filter>
+    </None>
+    <None Include="models\Samba Dancing.fbx">
       <Filter>Resource Files\models</Filter>
     </None>
   </ItemGroup>

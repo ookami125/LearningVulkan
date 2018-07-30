@@ -165,6 +165,11 @@
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AssimpUtils.h" />
+    <ClInclude Include="Math\mat4.h" />
+    <ClInclude Include="Math\quat.h" />
+    <ClInclude Include="Math\swizzle.h" />
+    <ClInclude Include="Math\vec4.h" />
+    <ClInclude Include="Memory.h" />
     <ClInclude Include="VulkanDynamicUBO.h" />
     <ClInclude Include="VulkanImageSampler.h" />
     <ClInclude Include="VulkanTextureData.h" />
@@ -192,6 +197,9 @@
     <ClInclude Include="VulkanUtils.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="models\Box_Walk.fbx" />
+    <None Include="models\Head Spinning.fbx" />
+    <None Include="models\Samba Dancing.fbx" />
     <None Include="models\ybotSambaDancing.fbx" />
     <None Include="shaders\shader_base.frag" />
     <None Include="shaders\shader_base.vert" />
