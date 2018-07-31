@@ -1,5 +1,6 @@
 #include "VulkanImageSampler.h"
 #include "VulkanDevice.h"
+#include "Logger.h"
 
 VulkanImageSampler::VulkanImageSampler(VulkanDevice* device) : device(device)
 {
@@ -21,6 +22,7 @@ VulkanImageSampler::VulkanImageSampler(VulkanDevice* device) : device(device)
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 0.0f;
 	if (vkCreateSampler(*device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }

@@ -2,6 +2,7 @@
 #include "VulkanException.h"
 #include <vector>
 #include <set>
+#include "Logger.h"
 
 bool VulkanInstance::CheckDeviceExtensionSupport(VkPhysicalDevice* device, const std::vector<const char*> deviceExtensions)
 {
@@ -78,8 +79,10 @@ VulkanInstance::VulkanInstance(HWND hwnd, std::vector<const char*> desiredExtens
 	instanceCreateInfo.ppEnabledLayerNames = availableDesiredLayers.data();
 
 	if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS)
+	{
+		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw new VulkanException("Failed to create VkInstance!", __LINE__, __FILE__);
-
+	}
 	VkWin32SurfaceCreateInfoKHR createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 	createInfo.pNext = nullptr;
@@ -89,7 +92,10 @@ VulkanInstance::VulkanInstance(HWND hwnd, std::vector<const char*> desiredExtens
 
 	auto result = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface);
 	if (result != VK_SUCCESS)
+	{
+		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw new VulkanException("failed to create window surface!", __LINE__, __FILE__);
+	}
 }
 
 VulkanInstance::~VulkanInstance()
@@ -150,6 +156,7 @@ VkPhysicalDevice VulkanInstance::GetPhysicalSuitableDevice(const std::vector<con
 
 		return device;
 	}
+	LOGGER->Log("%s : %d", __FILE__, __LINE__);
 	throw new VulkanException("Couldn't find suitable device!", __LINE__, __FILE__);
 }
 
@@ -170,9 +177,13 @@ void VulkanInstance::SetupDebugCallback() {
 	auto func = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
 	if (func != nullptr) {
 		if (func(instance, &createInfo, nullptr, &callback) != VK_SUCCESS)
+		{
+			LOGGER->Log("%s : %d", __FILE__, __LINE__);
 			throw new VulkanException("failed to set up debug callback!", __LINE__, __FILE__);
+		}
 	}
 	else {
+		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw new VulkanException("VkDebugReportCallbackCreateInfoEXT doesn't exist!", __LINE__, __FILE__);
 	}
 }

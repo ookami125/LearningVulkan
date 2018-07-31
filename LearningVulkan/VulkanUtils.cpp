@@ -1,6 +1,7 @@
 #include "VulkanUtils.h"
 #include "VulkanDevice.h"
 #include "VulkanCommandPool.h"
+#include "Logger.h"
 
 uint32_t FindMemoryType(VkPhysicalDevice * physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
@@ -13,6 +14,7 @@ uint32_t FindMemoryType(VkPhysicalDevice * physicalDevice, uint32_t typeFilter, 
 		}
 	}
 
+	LOGGER->Log("%s : %d", __FILE__, __LINE__);
 	throw new VulkanException("failed to find suitable memory type!", __LINE__, __FILE__);
 }
 
@@ -25,6 +27,7 @@ void createBuffer(VulkanDevice * device, VkPhysicalDevice * physicalDevice, VkDe
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	if (vkCreateBuffer(*device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to create buffer!");
 	}
 
@@ -37,6 +40,7 @@ void createBuffer(VulkanDevice * device, VkPhysicalDevice * physicalDevice, VkDe
 	allocInfo.memoryTypeIndex = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
 	if (vkAllocateMemory(*device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to allocate buffer memory!");
 	}
 
@@ -91,6 +95,7 @@ VkFormat FindSupportedFormat(VkPhysicalDevice * physicalDevice, const std::vecto
 		}
 	}
 
+	LOGGER->Log("%s : %d", __FILE__, __LINE__);
 	throw std::runtime_error("failed to find supported format!");
 }
 

@@ -8,11 +8,14 @@
 #include "Animation.h"
 #include "Memory.h"
 
+#include "Logger.h"
+
 Model::Model(std::string filepath)
 {
 	Assimp::Importer importer;
 	auto scene = importer.ReadFile(filepath.c_str(), aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_FlipWindingOrder);
 	if (!scene) {
+		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error(importer.GetErrorString());
 	}
 
@@ -255,6 +258,7 @@ void Model::LoadAnimations(std::string filepath)
 	Assimp::Importer importer;
 	auto scene = importer.ReadFile(filepath.c_str(), aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_FlipWindingOrder);
 	if (!scene) {
+		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error(importer.GetErrorString());
 	}
 

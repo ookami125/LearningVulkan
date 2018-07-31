@@ -1,6 +1,7 @@
 #include "VulkanDescriptorSetLayout.h"
 #include <vector>
 #include "VulkanDevice.h"
+#include "Logger.h"
 
 VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VulkanDevice* device) : device(device)
 {
@@ -26,6 +27,7 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VulkanDevice* device) : dev
 	layoutInfo.pBindings = bindings.data();
 
 	if (vkCreateDescriptorSetLayout(*device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 }
