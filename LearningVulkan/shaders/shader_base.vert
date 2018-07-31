@@ -40,8 +40,13 @@ void main() {
 	boneTransform     += inModelData.bones[inBoneIdx.z] * inBoneWeight.z;
 	boneTransform     += inModelData.bones[inBoneIdx.w] * inBoneWeight.w;	
 	
-	gl_Position = inViewProj.proj * inViewProj.view * inModelData.model * boneTransform * vec4(inPosition.xyz, 1.0);
-	//gl_Position /= gl_Position.w;
+    //mat4 model = mat4(
+    //    vec4(0.1, 0.0, 0.0, 0.0), 
+    //    vec4(0.0, 0.1, 0.0, 0.0), 
+    //    vec4(0.0, 0.0, 0.1, 0.0), 
+    //    vec4(0.0, 0.0, 0.0, 1.0));
+
+	gl_Position = inViewProj.proj * inViewProj.view * inModelData.model * boneTransform * inPosition;
 
     vec3 color1 = hsv2rgb(vec3(float(inBoneIdx.x)/5.0, 1.0, 1.0)) * inBoneWeight.x;
     vec3 color2 = hsv2rgb(vec3(float(inBoneIdx.y)/5.0, 1.0, 1.0)) * inBoneWeight.y;

@@ -273,10 +273,43 @@ void VulkanRenderer::StartRender()
 
 	//uboViewProj->view = Mat4f(1);//glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	//uboViewProj->proj = Mat4f(1);//glm::perspective(glm::radians(45.0f), width / (float)height, 0.1f, 100.0f);
-	uboViewProj->proj = MathUtils::projection(72.f, width / (float)height, 0.1f, 100.0f);
-	uboViewProj->view = MathUtils::translate(x, y, z);
-	printf("%f, %f, %f\n", x, y, z);
+	uboViewProj->proj = MathUtils::projection(90.f, width / (float)height, 0.1f, 1000.0f);
+	uboViewProj->view = MathUtils::lookAt(Vec4f(x, y, z, 1.0), Vec4f(0, 0, 1, 1), Vec4f(0.0, 1.0, 0.0, 0.0)).Transpose();
 	uboViewProj->proj.row[1] *= Vec4f(1, -1, 1, 1);
+	//uboViewProj->proj = Mat4f(
+	//	Vec4f(-0.530330f, 0.379642f, -0.596669f, -0.596550f),
+	//	Vec4f(0.530330f,  0.379642f, -0.596669f, -0.596550f),
+	//	Vec4f(0.000000f, -0.843649f, -0.537002f, -0.536895f),
+	//	Vec4f(0.000000f,  0.843650f, 17.103388f, 17.299950f)
+	//);
+	//uboViewProj->view = Mat4f(1);
+	//{
+	//	Mat4f temp = uboViewProj->view;
+	//
+	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[0])[0], ((float*)&temp.row[0])[1], ((float*)&temp.row[0])[2], ((float*)&temp.row[0])[3]);
+	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[1])[0], ((float*)&temp.row[1])[1], ((float*)&temp.row[1])[2], ((float*)&temp.row[1])[3]);
+	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[2])[0], ((float*)&temp.row[2])[1], ((float*)&temp.row[2])[2], ((float*)&temp.row[2])[3]);
+	//	printf("%f, %f, %f, %f\n\n", ((float*)&temp.row[3])[0], ((float*)&temp.row[3])[1], ((float*)&temp.row[3])[2], ((float*)&temp.row[3])[3]);
+	//}
+	//
+	//{
+	//	Mat4f temp = uboViewProj->proj;
+	//
+	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[0])[0], ((float*)&temp.row[0])[1], ((float*)&temp.row[0])[2], ((float*)&temp.row[0])[3]);
+	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[1])[0], ((float*)&temp.row[1])[1], ((float*)&temp.row[1])[2], ((float*)&temp.row[1])[3]);
+	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[2])[0], ((float*)&temp.row[2])[1], ((float*)&temp.row[2])[2], ((float*)&temp.row[2])[3]);
+	//	printf("%f, %f, %f, %f\n\n", ((float*)&temp.row[3])[0], ((float*)&temp.row[3])[1], ((float*)&temp.row[3])[2], ((float*)&temp.row[3])[3]);
+	//}
+	//
+	//{
+	//	Mat4f temp = uboViewProj->proj * uboViewProj->view;
+	//	
+	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[0])[0], ((float*)&temp.row[0])[1], ((float*)&temp.row[0])[2], ((float*)&temp.row[0])[3]);
+	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[1])[0], ((float*)&temp.row[1])[1], ((float*)&temp.row[1])[2], ((float*)&temp.row[1])[3]);
+	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[2])[0], ((float*)&temp.row[2])[1], ((float*)&temp.row[2])[2], ((float*)&temp.row[2])[3]);
+	//	printf("%f, %f, %f, %f\n\n", ((float*)&temp.row[3])[0], ((float*)&temp.row[3])[1], ((float*)&temp.row[3])[2], ((float*)&temp.row[3])[3]);
+	//}
+	//uboViewProj->proj.row[1] *= Vec4f(1, -1, 1, 1);
 	//uboViewProj->proj[1][1] *= -1;
 	vuboViewProj->Update();
 
@@ -345,7 +378,9 @@ void VulkanRenderer::Present()
 	}
 
 	//
-	image->TransitionImageLayout(commandPool, swapchain->GetFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+	auto scFormat = swapchain->GetFormat();
+	image->TransitionImageLayout(commandPool, scFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

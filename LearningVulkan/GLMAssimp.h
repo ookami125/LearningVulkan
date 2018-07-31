@@ -9,7 +9,8 @@
 Vec4f vec4(aiColor4D other);
 Vec4f vec3(aiColor4D other);
 Vec4f vec3(aiColor3D other);
-Vec4f vec3(aiVector3D other);
+Vec4f vec3(aiVector3D other, float w);
+//Vec4f vec3(aiVector3D other);
 Vec4f vec2(aiVector2D other);
 Vec4f vec2(aiVector3D other);
 Mat4f mat4(aiMatrix4x4 other);

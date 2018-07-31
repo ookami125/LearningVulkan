@@ -98,7 +98,7 @@ Bone::Bone(aiNodeAnim* node, uint32_t id, Bone * parent) : id(id), parent(parent
 		auto key = node->mPositionKeys[i];
 		KeyFrame* keyFrame = GetOrCreateKeyFrame((float)key.mTime);
 		keyFrame->type |= KeyFrame_Translate;
-		keyFrame->translate = vec3(key.mValue);
+		keyFrame->translate = vec3(key.mValue, 1);
 	}
 	for (uint32_t i = 0; i < node->mNumRotationKeys; ++i)
 	{
@@ -112,7 +112,7 @@ Bone::Bone(aiNodeAnim* node, uint32_t id, Bone * parent) : id(id), parent(parent
 		auto key = node->mScalingKeys[i];
 		KeyFrame* keyFrame = GetOrCreateKeyFrame((float)key.mTime);
 		keyFrame->type |= KeyFrame_Scale;
-		keyFrame->scale = vec3(key.mValue);
+		keyFrame->scale = vec3(key.mValue, 0);
 	}
 
 	//Fill in data that wasn't provided
@@ -212,7 +212,7 @@ KeyFrame KeyFrame::lerp(KeyFrame * kf, float ratio)
 	keyFrame.type = this->type;
 	keyFrame.time = (time + (kf->time - time) * ratio);
 	keyFrame.translate = (translate + (kf->translate - translate) * (float)ratio);
-	//keyFrame.rotate = glm::slerp(rotate, kf->rotate, (float)ratio);
+	keyFrame.rotate = MathUtils::slerp(rotate, kf->rotate, (float)ratio);
 	keyFrame.scale = (scale + (kf->scale - scale) * (float)ratio);
 	return keyFrame;
 }

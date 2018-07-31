@@ -156,14 +156,14 @@ Model::Model(std::string filepath)
 				for (int j = 0; j < numPositions; j++)
 				{
 					Vertex Vert;
-					Vert.pos = vec3(mesh->mVertices[j]);
+					Vert.pos = vec3(mesh->mVertices[j], 1);
 					Vert.color = (mesh->HasVertexColors(0)) ? vec3(mesh->mColors[0][j]) : Vec4f(1, 1, 1, NAN);
 					Vert.texCoord = (mesh->HasTextureCoords(0)) ? vec2(mesh->mTextureCoords[0][j]) : Vec4f(1, 1, NAN, NAN);
 					Vert.bonesIdx = Vec4f(0);
 					Vert.bonesWeights = Vec4f(0);
 					vertices.push_back(Vert);
 				}
-				meshP->vertices = (Vertex*)malloc(sizeof(Vertex) * vertices.size());
+				meshP->vertices = (Vertex*)_aligned_malloc(sizeof(Vertex) * vertices.size(), alignof(Vertex));
 				memcpy(meshP->vertices, &vertices[0], sizeof(Vertex) * vertices.size());
 				meshP->vertices_count = vertices.size();
 			}
@@ -242,7 +242,6 @@ Model::Model(std::string filepath)
 
 std::vector<Mat4f, AlignmentAllocator<Mat4f>> Model::GetAnimationFrame(int animationID, int meshID, double time)
 {
-	//time = 5.31e-5;
 	auto mesh = meshes[meshID];
 	animations[animationID]->GetAnimationFrame(mesh->boneMaps[animationID], (float)time);
 	auto bones = mesh->bones;
@@ -261,8 +260,6 @@ void Model::LoadAnimations(std::string filepath)
 
 	if (scene->HasAnimations())
 	{
-		//printf("Animations:\n");
-
 		int numAnimations = scene->mNumAnimations;
 		std::vector<Animation*> anims;
 		for (int i = 0; i < numAnimations; i++)

@@ -12,4 +12,7 @@ namespace MathUtils
 	Mat4f scale(float x, float y, float z);
 	Mat4f scale(Vec4f v);
 	Mat4f rotation(const Quatf& quat);
+
+	Mat4f lookAt(Vec4f eye, Vec4f center, Vec4f up);
+	Quatf slerp(Quatf start, Quatf end, float ratio);
 }

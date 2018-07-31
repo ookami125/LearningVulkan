@@ -70,3 +70,44 @@ Mat4f MathUtils::rotation(const Quatf& quat)
 		Vec4f(2 * (sy + xz), 2 * (yz - sx), 1 - 2 * (x2 + y2), 0.0f),
 		Vec4f(0.0f, 0.0f, 0.0f, 1.0f));
 }
+
+Mat4f MathUtils::lookAt(Vec4f eye, Vec4f center, Vec4f up)
+{
+	Vec4f const vf((center - eye).Normalize());
+	Vec4f const vs((vf ^ up).Normalize());
+	Vec4f const vu(vs ^ vf);
+
+	float f[4]; vf.Store(f);
+	float s[4]; vs.Store(s);
+	float u[4]; vu.Store(u);
+
+	Mat4f Result = Mat4f(
+		Vec4f(s[0], s[1], -s[2], -(vs * eye).compSum()),
+		Vec4f(u[0], u[1], -u[2], -(vu * eye).compSum()),
+		Vec4f(f[0], f[1], -f[2],  (vf * eye).compSum()),
+		Vec4f(   0,    0,     0,                     1)
+	);
+	return Result;
+}
+
+Quatf MathUtils::slerp(Quatf v0, Quatf v1, float ratio)
+{
+	v0.Normalize();
+	v1.Normalize();
+
+	double dot = (v0*v1).compSum();
+	if (dot < 0.0f) {
+		v1 = Quatf(0)-v1;
+		dot = -dot;
+	} else if (dot > 0.9995) {
+		Quatf result = v0 + ratio * (v1 - v0);
+		return result.Normalize();
+	}
+	double theta_0 = acos(dot);
+	double theta = theta_0 * ratio;
+	double sin_theta_0 = sin(theta_0);
+	double sin_theta = sin(theta);
+	double s1 = sin_theta / sin_theta_0;
+	double s0 = cos(theta) -dot * s1;
+	return ((float)s0 * v0) + ((float)s1 * v1);
+}

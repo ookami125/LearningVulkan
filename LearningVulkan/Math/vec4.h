@@ -63,8 +63,20 @@ struct alignas(16) Vec4f
 
 	__forceinline float compSum()
 	{
-		float data[4]; Store(data);
-		return data[0] + data[1] + data[2] + data[3];
+		__m128 temp = _mm_hadd_ps(data, data);
+		temp = _mm_hadd_ps(temp, temp);
+		//float data;
+		//_mm_store_ss(&data, temp);
+		return temp.m128_f32[0];
+	}
+
+	__forceinline Vec4f Normalize()
+	{
+		__m128 result = _mm_mul_ps(data, data);
+		result = _mm_hadd_ps(result, result);
+		result = _mm_hadd_ps(result, result);
+		result = _mm_rsqrt_ps(result);
+		return _mm_mul_ps(data, result);
 	}
 
 	template<int swizzle>
@@ -103,6 +115,11 @@ struct alignas(16) Vec4f
 	{
 		Vec4f c = (*this * rhs.Swizzle<YZXW>() - Swizzle<YZXW>() * rhs).Swizzle<YZXW>();
 		return c;
+	}
+
+	__forceinline Vec4f operator-(int i) const
+	{
+		return _mm_sub_ps(Vec4f(0), data);
 	}
 
 	__forceinline bool operator==(const Vec4f & rhs) const

@@ -57,6 +57,24 @@ union alignas(16) Quatf
 		memcpy_s(wxyz, 4 * sizeof(float), _data, sizeof(data));
 	}
 
+	__forceinline float compSum()
+	{
+		__m128 temp = _mm_hadd_ps(data, data);
+		temp = _mm_hadd_ps(temp, temp);
+		//float data;
+		//_mm_store_ss(&data, temp);
+		return temp.m128_f32[0];
+	}
+
+	__forceinline Quatf Normalize()
+	{
+		__m128 result = _mm_mul_ps(data, data);
+		result = _mm_hadd_ps(result, result);
+		result = _mm_hadd_ps(result, result);
+		result = _mm_rsqrt_ps(result);
+		return _mm_mul_ps(data, result);
+	}
+
 	__forceinline Quatf operator*(const Quatf & rhs) const
 	{
 		Vec4f a1123 = _mm_shuffle_ps(data, data, 0xE5);
@@ -77,6 +95,21 @@ union alignas(16) Quatf
 		return _mm_add_ps(t03, t12m);
 	}
 
+	__forceinline Quatf operator-(const Quatf& rhs)
+	{
+		return _mm_sub_ps(data, rhs);
+	}
+
+	__forceinline Quatf operator+(const Quatf& rhs)
+	{
+		return _mm_add_ps(data, rhs);
+	}
+
+	__forceinline Quatf operator*(const float& rhs)
+	{
+		return _mm_mul_ps(data, Quatf(rhs));
+	}
+
 	__forceinline bool operator==(const Quatf & rhs) const
 	{
 		Vec4f vcmp = _mm_cmpeq_ps(data, rhs.data);
@@ -85,3 +118,8 @@ union alignas(16) Quatf
 		return (temp[0] == 0.0f) && (temp[1] == 0.0f) && (temp[2] == 0.0f) && (temp[3] == 0.0f);
 	}
 };
+
+__forceinline static Quatf operator*(const float& lhs, const Quatf& rhs)
+{
+	return _mm_mul_ps(Quatf(lhs), rhs);
+}

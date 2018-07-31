@@ -60,33 +60,34 @@ union alignas(32) Mat4f
 
 	Mat4f Inverse()
 	{
+		Vec4f A = row[0].Shuffle<XYXY>(row[1]);
+		Vec4f B = row[0].Shuffle<ZWZW>(row[1]);
+		Vec4f C = row[2].Shuffle<XYXY>(row[3]);
+		Vec4f D = row[2].Shuffle<ZWZW>(row[3]);
+		Vec4f detSub = row[0].Shuffle<XZXZ>(row[2]) * row[1].Shuffle<YWYW>(row[3]) - row[0].Shuffle<YWYW>(row[2]) * row[1].Shuffle<XZXZ>(row[3]);
+		Vec4f detA = detSub.Swizzle<XXXX>();
+		Vec4f detB = detSub.Swizzle<YYYY>();
+		Vec4f detC = detSub.Swizzle<ZZZZ>();
+		Vec4f detD = detSub.Swizzle<WWWW>();
+		Vec4f D_C = D.Swizzle<WWXX>() * C - D.Swizzle<YYZZ>() * C.Swizzle<ZWXY>();
+		Vec4f A_B = A.Swizzle<WWXX>() * B - A.Swizzle<YYZZ>() * B.Swizzle<ZWXY>();
+		Vec4f X_ = detD * A - (B * D_C.Swizzle<XWXW>() + B.Swizzle<YXWZ>() * D_C.Swizzle<ZYZY>());
+		Vec4f W_ = detA * D - (C * A_B.Swizzle<XWXW>() + C.Swizzle<YXWZ>() * A_B.Swizzle<ZYZY>());
+		Vec4f Y_ = detB * C - (D * A_B.Swizzle<WXWX>() - D.Swizzle<YXWZ>() * A_B.Swizzle<ZYZY>());
+		Vec4f Z_ = detC * B - (A * D_C.Swizzle<WXWX>() - A.Swizzle<YXWZ>() * D_C.Swizzle<ZYZY>());
+		Vec4f tr = A_B * D_C.Swizzle<XZYW>();
+		tr = _mm_hadd_ps(tr, tr);
+		tr = _mm_hadd_ps(tr, tr);
+		Vec4f rDetM = Vec4f(1.f, -1.f, -1.f, 1.f) / (detA * detD + detB * detC - tr);
+		X_ *= rDetM;
+		Y_ *= rDetM;
+		Z_ *= rDetM;
+		W_ *= rDetM;
 		Mat4f r;
-
-		// transpose 3x3, we know m03 = m13 = m23 = 0
-		Vec4f t0 = _mm_movelh_ps(row[0], row[1]); // 00, 01, 10, 11
-		Vec4f t1 = _mm_movehl_ps(row[0], row[1]); // 02, 03, 12, 13
-		r.row[0] = t0.Shuffle<_MM_SHUFFLE(0, 2, 0, 3)>(row[2]); //VecShuffle(t0, inM.mVec[2], 0, 2, 0, 3); // 00, 10, 20, 23(=0)
-		r.row[1] = t0.Shuffle<_MM_SHUFFLE(1, 3, 1, 3)>(row[2]); //VecShuffle(t0, inM.mVec[2], 1, 3, 1, 3); // 01, 11, 21, 23(=0)
-		r.row[2] = t1.Shuffle<_MM_SHUFFLE(1, 3, 1, 3)>(row[2]); //VecShuffle(t1, inM.mVec[2], 0, 2, 2, 3); // 02, 12, 22, 23(=0)
-
-															 // (SizeSqr(mVec[0]), SizeSqr(mVec[1]), SizeSqr(mVec[2]), 0)
-		Vec4f sizeSqr = ((((r.row[0] * r.row[0]) + r.row[1] * r.row[1])) + r.row[2] * r.row[2]);
-
-		// optional test to avoid divide by 0
-		Vec4f one = _mm_set1_ps(1.f);
-		// for each component, if(sizeSqr < SMALL_NUMBER) sizeSqr = 1;
-		Vec4f rSizeSqr = _mm_blendv_ps( one + sizeSqr, one, _mm_cmplt_ps(sizeSqr, Vec4f(1.e-8f)));
-
-		r.row[0] *= rSizeSqr;
-		r.row[1] *= rSizeSqr;
-		r.row[2] *= rSizeSqr;
-
-		// last line
-		r.row[3] = r.row[0] + row[3].Swizzle<XXXX>();
-		r.row[3] = r.row[3] + r.row[1] * row[3].Swizzle<YYYY>();
-		r.row[3] = r.row[3] + r.row[2] * row[3].Swizzle<ZZZZ>();
-		r.row[3] = Vec4f(0.f, 0.f, 0.f, 1.f) - r.row[3];
-
+		r.row[0] = X_.Shuffle<WYWY>(Y_);
+		r.row[1] = X_.Shuffle<ZXZX>(Y_);
+		r.row[2] = Z_.Shuffle<WYWY>(W_);
+		r.row[3] = Z_.Shuffle<ZXZX>(W_);
 		return r;
 	}
 
