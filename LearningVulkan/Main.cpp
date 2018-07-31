@@ -45,6 +45,19 @@ int main(int argc, char** argv)
 	while(!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+		if (glfwGetKey(window, GLFW_KEY_W))
+			renderer->y += 0.1f;
+		if (glfwGetKey(window, GLFW_KEY_S))
+			renderer->y -= 0.1f;
+		if (glfwGetKey(window, GLFW_KEY_A))
+			renderer->x += 0.1f;
+		if (glfwGetKey(window, GLFW_KEY_D))
+			renderer->y -= 0.1f;
+		if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT))
+			renderer->z -= 0.1f;
+		if (glfwGetKey(window, GLFW_KEY_SPACE))
+			renderer->z += 0.1f;
+
 		renderer->StartRender();
 		renderer->RenderModel(character);
 		renderer->RenderModel(character2);

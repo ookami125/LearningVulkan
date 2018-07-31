@@ -77,6 +77,9 @@ class VulkanRenderer
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
 public:
+
+	float x = 0.0f, y = 0.0f, z = 0.0f;
+
 	VulkanRenderer(HWND hwnd);
 	~VulkanRenderer();
 

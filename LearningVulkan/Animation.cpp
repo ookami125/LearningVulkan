@@ -5,7 +5,7 @@
 #include "GLMAssimp.h"
 #include "Model.h"
 #include "Memory.h"
-#include "MathUtils.h"
+#include "Math/MathUtils.h"
 
 Animation::Animation(const aiAnimation * animation, const aiScene * scene)
 {

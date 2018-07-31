@@ -25,7 +25,7 @@
 #include <vector>
 #include <chrono>
 #include "Memory.h"
-#include "MathUtils.h"
+#include "Math/MathUtils.h"
 
 VulkanRenderer::VulkanRenderer(HWND hwnd)
 {
@@ -273,8 +273,10 @@ void VulkanRenderer::StartRender()
 
 	//uboViewProj->view = Mat4f(1);//glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	//uboViewProj->proj = Mat4f(1);//glm::perspective(glm::radians(45.0f), width / (float)height, 0.1f, 100.0f);
-	uboViewProj->proj = MathUtils::projection(72.f, width / (float)height, 0.01f, 1000.0f);
-	uboViewProj->view = Mat4f(1); //MathUtils::translate(0.f, 0.f, 100.f);
+	uboViewProj->proj = MathUtils::projection(72.f, width / (float)height, 0.1f, 100.0f);
+	uboViewProj->view = MathUtils::translate(x, y, z);
+	printf("%f, %f, %f\n", x, y, z);
+	uboViewProj->proj.row[1] *= Vec4f(1, -1, 1, 1);
 	//uboViewProj->proj[1][1] *= -1;
 	vuboViewProj->Update();
 

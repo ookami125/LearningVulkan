@@ -1,6 +1,6 @@
 #pragma once
-#include "Math/mat4.h"
-#include "Math/quat.h"
+#include "mat4.h"
+#include "quat.h"
 
 namespace MathUtils
 {

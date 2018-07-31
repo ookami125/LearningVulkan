@@ -2,7 +2,7 @@
 
 Mat4f MathUtils::projection(float angleOfView, float imageAspectRatio, float near_plane, float far_plane)
 {
-	float scale = tan(angleOfView * 0.5 * M_PI / 180) * near_plane;
+	float scale = tan(angleOfView * 0.5f * M_PI / 180) * near_plane;
 	float r = imageAspectRatio * scale, l = -r;
 	float t = scale, b = -t;
 	return Mat4f(
