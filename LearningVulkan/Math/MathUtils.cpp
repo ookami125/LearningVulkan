@@ -65,9 +65,9 @@ Mat4f MathUtils::rotation(const Quatf& quat)
 	const float sx = s * x, sy = s * y, sz = s * z;
 	const float xz = x * z, yz = y * z, xy = x * y;
 	return Mat4f(
-		Vec4f(1 - 2 * (y2 + z2), 2 * (xy + sz), 2 * (xz - sy), 0.0f),
-		Vec4f(2 * (xy - sz), 1 - 2 * (x2 + z2), 2 * (sx + yz), 0.0f),
-		Vec4f(2 * (sy + xz), 2 * (yz - sx), 1 - 2 * (x2 + y2), 0.0f),
+		Vec4f(1 - 2 * (y2 + z2), 0 + 2 * (xy + sz), 0 + 2 * (xz - sy), 0.0f),
+		Vec4f(0 + 2 * (xy - sz), 1 - 2 * (x2 + z2), 0 + 2 * (sx + yz), 0.0f),
+		Vec4f(0 + 2 * (sy + xz), 0 + 2 * (yz - sx), 1 - 2 * (x2 + y2), 0.0f),
 		Vec4f(0.0f, 0.0f, 0.0f, 1.0f));
 }
 

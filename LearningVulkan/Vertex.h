@@ -7,7 +7,7 @@ struct Vertex {
 	Vec4f pos;
 	Vec4f color;
 	Vec4f texCoord;
-	Vec4f bonesIdx;
+	uint32_t bonesIdx[4];
 	Vec4f bonesWeights;
 
 	static VkVertexInputBindingDescription getBindingDescription();

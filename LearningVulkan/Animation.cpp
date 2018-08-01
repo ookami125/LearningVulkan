@@ -68,13 +68,15 @@ std::string Animation::GetBoneName(int i)
 
 void Animation::GetAnimationFrame(std::vector<Mat4f*> boneMap, float time)
 {
-	time *= tps;
+	//time = 0.0f;
 	if (time > duration) time = fmod(time, duration);
 	//printf("time: %lf\n", time);
 	for (auto bone : bones)
 	{
-		Mat4f parentMat = (bone->GetParent()) ? *boneMap[bone->GetParent()->GetID()] : Mat4f(1);
-		*boneMap[bone->GetID()] = bone->GetMatrix(time) * parentMat;
+		auto parent = bone->GetParent();
+		Mat4f parentMat = parent ? *boneMap[parent->GetID()] : Mat4f(1);
+		Mat4f boneMat = bone->GetMatrix(time);
+		*boneMap[bone->GetID()] = boneMat.Transpose() * parentMat;
 	}
 }
 
@@ -194,32 +196,26 @@ Mat4f Bone::GetMatrix(float time)
 	//return glm::rotate(Mat4f(1), (float)time, glm::vec3(0, 1, 0));
 }
 
+#define GLM_FORCE_SWIZZLE
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 Mat4f KeyFrame::getMatrix()
 {
-	Mat4f translate = MathUtils::translate(this->translate).Transpose();
-	//Mat4f translate = glm::transpose(glm::translate(Mat4f(1.0), this->translate));
+	glm::vec4 thisTranslate; this->translate.Store(&thisTranslate.x, &thisTranslate.y, &thisTranslate.z, &thisTranslate.w);
+	glm::mat4 translate2 = glm::transpose(glm::translate(glm::mat4(1.0), glm::vec3(thisTranslate.xyz)));
+	glm::quat thisRotate; this->rotate.Store(&thisRotate.w, &thisRotate.x, &thisRotate.y, &thisRotate.z);
+	glm::mat4 rotate2    = glm::transpose(glm::toMat4(thisRotate));
+	glm::vec4 thisScale; this->scale.Store(&thisScale.x, &thisScale.y, &thisScale.z, &thisScale.w);
+	glm::mat4 scale2     = glm::transpose(glm::scale(glm::mat4(1.0), glm::vec3(thisScale.xyz)));
+	glm::mat4 result2 = scale2 * rotate2 * translate2;
+
+	Mat4f translate = MathUtils::translate(this->translate);
 	Mat4f rotate = MathUtils::rotation(this->rotate).Transpose();
-	//Mat4f rotate    = glm::transpose(Mat4f_cast(this->rotate));
-	Mat4f scale = MathUtils::scale(this->scale).Transpose();
-	//Mat4f scale     = glm::transpose(glm::scale(Mat4f(1.0), this->scale));
-	Mat4f result = scale * rotate * translate;
-	if (isnan(result.drow[0].m256_f32[0]) ||
-		isnan(result.drow[0].m256_f32[1]) ||
-		isnan(result.drow[0].m256_f32[2]) ||
-		isnan(result.drow[0].m256_f32[3]) ||
-		isnan(result.drow[0].m256_f32[4]) ||
-		isnan(result.drow[0].m256_f32[5]) ||
-		isnan(result.drow[0].m256_f32[6]) ||
-		isnan(result.drow[0].m256_f32[7]) ||
-		isnan(result.drow[1].m256_f32[0]) ||
-		isnan(result.drow[1].m256_f32[1]) ||
-		isnan(result.drow[1].m256_f32[2]) ||
-		isnan(result.drow[1].m256_f32[3]) ||
-		isnan(result.drow[1].m256_f32[4]) ||
-		isnan(result.drow[1].m256_f32[5]) ||
-		isnan(result.drow[1].m256_f32[6]) ||
-		isnan(result.drow[1].m256_f32[7]))
-		__noop;
+	Mat4f scale = MathUtils::scale(this->scale);
+	Mat4f result = translate  * rotate * scale;
 	return result;
 }
 

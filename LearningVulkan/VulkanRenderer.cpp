@@ -373,8 +373,10 @@ void VulkanRenderer::Present()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
-		throw std::runtime_error("failed to submit draw command buffer!");
+
+	auto error = vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	if (error != VK_SUCCESS) {
+		throw std::runtime_error("failed to submit draw command buffer! " + error);
 	}
 
 	//

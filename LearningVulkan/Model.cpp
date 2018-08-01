@@ -159,7 +159,10 @@ Model::Model(std::string filepath)
 					Vert.pos = vec3(mesh->mVertices[j], 1);
 					Vert.color = (mesh->HasVertexColors(0)) ? vec3(mesh->mColors[0][j]) : Vec4f(1, 1, 1, NAN);
 					Vert.texCoord = (mesh->HasTextureCoords(0)) ? vec2(mesh->mTextureCoords[0][j]) : Vec4f(1, 1, NAN, NAN);
-					Vert.bonesIdx = Vec4f(0);
+					Vert.bonesIdx[0] = 0;
+					Vert.bonesIdx[1] = 0;
+					Vert.bonesIdx[2] = 0;
+					Vert.bonesIdx[3] = 0;
 					Vert.bonesWeights = Vec4f(0);
 					vertices.push_back(Vert);
 				}
@@ -184,12 +187,12 @@ Model::Model(std::string filepath)
 					{
 						auto weight = bone->mWeights[k];
 
-						float boneIdx = (float)j;
+						uint32_t boneIdx = j;
 						float boneWeight = weight.mWeight;
 						//printf("%d\n", weight.mVertexId);
 						Vertex& vertex = meshP->vertices[weight.mVertexId];
-						float bonesIdx[4];
-						vertex.bonesIdx.Store(bonesIdx);
+						//float bonesIdx[4];
+						//vertex.bonesIdx.Store(bonesIdx);
 						float bonesWeights[4];
 						vertex.bonesWeights.Store(bonesWeights);
 						
@@ -197,11 +200,11 @@ Model::Model(std::string filepath)
 						{
 							if (bonesWeights[l] < weight.mWeight)
 							{
-								std::swap(bonesIdx[l], boneIdx);
+								std::swap(vertex.bonesIdx[l], boneIdx);
 								std::swap(bonesWeights[l], boneWeight);
 							}
 						}
-						vertex.bonesIdx.Load(bonesIdx[0], bonesIdx[1], bonesIdx[2], bonesIdx[3]);
+						//vertex.bonesIdx.Load(bonesIdx[0], bonesIdx[1], bonesIdx[2], bonesIdx[3]);
 						vertex.bonesWeights.Load(bonesWeights[0], bonesWeights[1], bonesWeights[2], bonesWeights[3]);
 					}
 				}

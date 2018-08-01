@@ -31,7 +31,7 @@ std::array<VkVertexInputAttributeDescription, 5> Vertex::getAttributeDescription
 
 	attributeDescriptions[3].binding = 0;
 	attributeDescriptions[3].location = 3;
-	attributeDescriptions[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	attributeDescriptions[3].format = VK_FORMAT_R32G32B32A32_UINT;
 	attributeDescriptions[3].offset = offsetof(Vertex, bonesIdx);
 
 	attributeDescriptions[4].binding = 0;

@@ -24,7 +24,7 @@ union alignas(32) Mat4f
 		Load(x, y, z, w);
 	}
 
-	__forceinline Mat4f(Vec4f data[4])
+	__forceinline Mat4f(const Vec4f data[4])
 	{
 		assert(((const ptrdiff_t)this) % alignof(Mat4f) == 0);
 		row[0] = data[0];
@@ -91,7 +91,7 @@ union alignas(32) Mat4f
 		return r;
 	}
 
-	Mat4f Transpose()
+	Mat4f Transpose() const
 	{
 		Mat4f temp = Mat4f(row);
 		_MM_TRANSPOSE4_PS(temp.row[0], temp.row[1], temp.row[2], temp.row[3]);
@@ -102,6 +102,7 @@ union alignas(32) Mat4f
 	{
 		Mat4f temp;
 		_mm256_zeroupper();
+		Mat4f trhs = rhs.Transpose();
 		temp.drow[0] = _mm256_mul_ps(_mm256_shuffle_ps(drow[0], drow[0], 0x00), _mm256_broadcast_ps(&rhs.row[0].data));
 		temp.drow[0] = _mm256_add_ps(temp.drow[0], _mm256_mul_ps(_mm256_shuffle_ps(drow[0], drow[0], 0x55), _mm256_broadcast_ps(&rhs.row[1].data)));
 		temp.drow[0] = _mm256_add_ps(temp.drow[0], _mm256_mul_ps(_mm256_shuffle_ps(drow[0], drow[0], 0xaa), _mm256_broadcast_ps(&rhs.row[2].data)));
@@ -112,6 +113,34 @@ union alignas(32) Mat4f
 		temp.drow[1] = _mm256_add_ps(temp.drow[1], _mm256_mul_ps(_mm256_shuffle_ps(drow[1], drow[1], 0xff), _mm256_broadcast_ps(&rhs.row[3].data)));
 		return temp;
 	}
+
+	//__forceinline Mat4f operator*(const Mat4f rhs) const
+	//{
+	//	Mat4f temp;
+	//	const __m128 BCx = _mm_load_ps((float*)&rhs.row[0]);
+	//	const __m128 BCy = _mm_load_ps((float*)&rhs.row[1]);
+	//	const __m128 BCz = _mm_load_ps((float*)&rhs.row[2]);
+	//	const __m128 BCw = _mm_load_ps((float*)&rhs.row[3]);
+	//
+	//	float* leftRowPointer = (float*)&row[0];
+	//	float* resultRowPointer = (float*)&temp.row[0];
+	//
+	//	for (unsigned int i = 0; i < 4; ++i, leftRowPointer += 4, resultRowPointer += 4) {
+	//		Vec4f ARx = _mm_set_ps1(leftRowPointer[0]);
+	//		Vec4f ARy = _mm_set_ps1(leftRowPointer[1]);
+	//		Vec4f ARz = _mm_set_ps1(leftRowPointer[2]);
+	//		Vec4f ARw = _mm_set_ps1(leftRowPointer[3]);
+	//
+	//		Vec4f X = ARx * BCx;
+	//		Vec4f Y = ARy * BCy;
+	//		Vec4f Z = ARz * BCz;
+	//		Vec4f W = ARw * BCw;
+	//
+	//		Vec4f R = X + Y + Z + W;
+	//		_mm_store_ps(resultRowPointer, R);
+	//	}
+	//	return temp;
+	//}
 
 	__forceinline Vec4f operator*(const Vec4f rhs) const
 	{

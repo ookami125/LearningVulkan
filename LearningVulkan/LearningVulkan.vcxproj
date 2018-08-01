@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)includes;$(VULKAN_SDK)\Include;$(GLFW)\include;$(Assimp)\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Libraries\glm\include;$(SolutionDir)includes;$(VULKAN_SDK)\Include;$(GLFW)\include;$(Assimp)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(VULKAN_SDK)\Lib32;$(GLFW)\lib32;$(Assimp)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
