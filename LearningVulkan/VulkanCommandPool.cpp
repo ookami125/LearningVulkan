@@ -3,7 +3,6 @@
 #include "VulkanDevice.h"
 #include "VulkanException.h"
 #include <vulkan\vulkan.h>
-#include "Logger.h"
 
 VulkanCommandPool::VulkanCommandPool(VkPhysicalDevice* physicalDevice, VulkanDevice* device, VulkanInstance* instance) : device(device)
 {
@@ -15,7 +14,6 @@ VulkanCommandPool::VulkanCommandPool(VkPhysicalDevice* physicalDevice, VulkanDev
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 	if (vkCreateCommandPool(*device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw new VulkanException("failed to create command pool!", __LINE__, __FILE__);
 	}
 }

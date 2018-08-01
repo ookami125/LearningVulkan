@@ -203,6 +203,23 @@ Mat4f KeyFrame::getMatrix()
 	Mat4f scale = MathUtils::scale(this->scale).Transpose();
 	//Mat4f scale     = glm::transpose(glm::scale(Mat4f(1.0), this->scale));
 	Mat4f result = scale * rotate * translate;
+	if (isnan(result.drow[0].m256_f32[0]) ||
+		isnan(result.drow[0].m256_f32[1]) ||
+		isnan(result.drow[0].m256_f32[2]) ||
+		isnan(result.drow[0].m256_f32[3]) ||
+		isnan(result.drow[0].m256_f32[4]) ||
+		isnan(result.drow[0].m256_f32[5]) ||
+		isnan(result.drow[0].m256_f32[6]) ||
+		isnan(result.drow[0].m256_f32[7]) ||
+		isnan(result.drow[1].m256_f32[0]) ||
+		isnan(result.drow[1].m256_f32[1]) ||
+		isnan(result.drow[1].m256_f32[2]) ||
+		isnan(result.drow[1].m256_f32[3]) ||
+		isnan(result.drow[1].m256_f32[4]) ||
+		isnan(result.drow[1].m256_f32[5]) ||
+		isnan(result.drow[1].m256_f32[6]) ||
+		isnan(result.drow[1].m256_f32[7]))
+		__noop;
 	return result;
 }
 
@@ -212,7 +229,7 @@ KeyFrame KeyFrame::lerp(KeyFrame * kf, float ratio)
 	keyFrame.type = this->type;
 	keyFrame.time = (time + (kf->time - time) * ratio);
 	keyFrame.translate = (translate + (kf->translate - translate) * (float)ratio);
-	keyFrame.rotate = MathUtils::slerp(rotate, kf->rotate, (float)ratio);
+	keyFrame.rotate = MathUtils::slerp(kf->rotate, rotate, (float)ratio);
 	keyFrame.scale = (scale + (kf->scale - scale) * (float)ratio);
 	return keyFrame;
 }

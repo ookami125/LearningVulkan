@@ -4,11 +4,9 @@
 #include <algorithm>
 
 #include "Texture.h"
-#include "Logger.h"
 
 Texture* ResourceManager::LoadTexture(std::string filepath)
 {
-	LOGGER->Log("%s : %d", __FILE__, __LINE__);
 	throw "Function not yet implemented!";
 	return nullptr;
 }

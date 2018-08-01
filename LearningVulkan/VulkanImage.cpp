@@ -2,7 +2,6 @@
 #include "VulkanDevice.h"
 #include "VulkanUtils.h"
 #include <vulkan\vulkan.h>
-#include "Logger.h"
 
 VulkanImage::VulkanImage(VulkanDevice* device, VkImage image, VkImageView view, bool swapchainOwned) : device(device), image(image), view(view), swapchainOwned(swapchainOwned){}
 
@@ -24,7 +23,6 @@ VulkanImage::VulkanImage(VulkanDevice* device, VkPhysicalDevice* physicalDevice,
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	if (vkCreateImage(*device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to create image!");
 	}
 
@@ -37,7 +35,6 @@ VulkanImage::VulkanImage(VulkanDevice* device, VkPhysicalDevice* physicalDevice,
 	allocInfo.memoryTypeIndex = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
 	if (vkAllocateMemory(*device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to allocate image memory!");
 	}
 
@@ -55,7 +52,6 @@ VulkanImage::VulkanImage(VulkanDevice* device, VkPhysicalDevice* physicalDevice,
 	viewInfo.subresourceRange.layerCount = 1;
 
 	if (vkCreateImageView(*device, &viewInfo, nullptr, &view) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to create texture image view!");
 	}
 }
@@ -78,7 +74,6 @@ VulkanImage::VulkanImage(VulkanDevice* device, VkPhysicalDevice* physicalDevice,
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	if (vkCreateImage(*device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to create image!");
 	}
 
@@ -91,7 +86,6 @@ VulkanImage::VulkanImage(VulkanDevice* device, VkPhysicalDevice* physicalDevice,
 	allocInfo.memoryTypeIndex = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
 	if (vkAllocateMemory(*device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to allocate image memory!");
 	}
 
@@ -202,7 +196,6 @@ void VulkanImage::TransitionImageLayout(VulkanCommandPool* commandPool, VkFormat
 		destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	}
 	else {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::invalid_argument("unsupported layout transition!");
 	}
 

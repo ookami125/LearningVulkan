@@ -27,8 +27,6 @@
 #include "Memory.h"
 #include "Math/MathUtils.h"
 
-#include "Logger.h"
-
 VulkanRenderer::VulkanRenderer(HWND hwnd)
 {
 	RECT rect;
@@ -83,7 +81,6 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 
 	if (vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
 		vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 
 		throw std::runtime_error("failed to create semaphores!");
 	}
@@ -323,7 +320,6 @@ void VulkanRenderer::StartRender()
 	beginInfo.pInheritanceInfo = nullptr; // Optional
 
 	if (vkBeginCommandBuffer(activeCommandBuffer, &beginInfo) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to begin recording command buffer!");
 	}
 
@@ -350,7 +346,6 @@ void VulkanRenderer::EndRender()
 	vkCmdEndRenderPass(activeCommandBuffer);
 
 	if (vkEndCommandBuffer(activeCommandBuffer) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to record command buffer!");
 	}
 }
@@ -379,7 +374,6 @@ void VulkanRenderer::Present()
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
 	if (vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 

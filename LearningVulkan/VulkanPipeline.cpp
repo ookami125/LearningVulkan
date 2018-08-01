@@ -7,7 +7,6 @@
 #include "VulkanException.h"
 #include "Vertex.h"
 #include <vulkan\vulkan.h>
-#include "Logger.h"
 
 VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain, VulkanShaderStage* shaderStage, VulkanRenderPass* renderPass, std::vector<VulkanDescriptorSetLayout*> descriptorSets) : device(device)
 {
@@ -96,7 +95,6 @@ VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain,
 	pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
 
 	if (vkCreatePipelineLayout(*device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw new VulkanException("failed to create pipeline layout!", __LINE__, __FILE__);
 	}
 
@@ -117,7 +115,6 @@ VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanSwapchain* swapchain,
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw new VulkanException("failed to create graphics pipeline!", __LINE__, __FILE__);
 	}
 }

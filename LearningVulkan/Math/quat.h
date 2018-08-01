@@ -100,6 +100,11 @@ union alignas(16) Quatf
 		return _mm_sub_ps(data, rhs);
 	}
 
+	__forceinline Quatf operator-()
+	{
+		return _mm_mul_ps(data, Quatf(1, -1, -1, -1));
+	}
+
 	__forceinline Quatf operator+(const Quatf& rhs)
 	{
 		return _mm_add_ps(data, rhs);

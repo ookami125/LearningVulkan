@@ -92,14 +92,15 @@ Mat4f MathUtils::lookAt(Vec4f eye, Vec4f center, Vec4f up)
 
 Quatf MathUtils::slerp(Quatf v0, Quatf v1, float ratio)
 {
-	v0.Normalize();
-	v1.Normalize();
+	v0 = v0.Normalize();
+	v1 = v1.Normalize();
 
 	double dot = (v0*v1).compSum();
 	if (dot < 0.0f) {
-		v1 = Quatf(0)-v1;
+		v1 = -v1;
 		dot = -dot;
-	} else if (dot > 0.9995) {
+	}
+	if (dot > 0.9995) {
 		Quatf result = v0 + ratio * (v1 - v0);
 		return result.Normalize();
 	}

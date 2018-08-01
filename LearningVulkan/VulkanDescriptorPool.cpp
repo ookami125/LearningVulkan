@@ -8,7 +8,6 @@
 #include "VulkanImageSampler.h"
 #include "Texture.h"
 #include <array>
-#include "Logger.h"
 
 VulkanDescriptorPool::VulkanDescriptorPool(VulkanDevice* device) : device(device)
 {
@@ -27,7 +26,6 @@ VulkanDescriptorPool::VulkanDescriptorPool(VulkanDevice* device) : device(device
 	poolInfo.maxSets = 3;
 
 	if (vkCreateDescriptorPool(*device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to create descriptor pool!");
 	}
 }
@@ -47,7 +45,6 @@ VkDescriptorSet VulkanDescriptorPool::AllocateDescriptorSet(VulkanDescriptorSetL
 
 	VkDescriptorSet descriptorSet;
 	if (vkAllocateDescriptorSets(*device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to allocate descriptor set!");
 	}
 
@@ -68,7 +65,6 @@ std::vector<VkDescriptorSet> VulkanDescriptorPool::AllocateDescriptorSets(Vulkan
 	std::vector<VkDescriptorSet> descriptorSets;
 	descriptorSets.resize(count);
 	if (vkAllocateDescriptorSets(*device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to allocate descriptor set!");
 	}
 

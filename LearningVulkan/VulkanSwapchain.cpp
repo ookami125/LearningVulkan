@@ -10,8 +10,6 @@
 #include <algorithm>
 #include <array>
 
-#include "Logger.h"
-
 VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
 	if (availableFormats.size() == 1 && availableFormats[0].format == VK_FORMAT_UNDEFINED) {
@@ -102,7 +100,6 @@ VulkanSwapchain::VulkanSwapchain(VkPhysicalDevice* physicalDevice, VulkanInstanc
 	createInfo.oldSwapchain = VK_NULL_HANDLE;
 
 	if (vkCreateSwapchainKHR(*logicalDevice, &createInfo, nullptr, &swapchain) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw std::runtime_error("failed to create swap chain!");
 	}
 
@@ -140,7 +137,6 @@ VulkanSwapchain::VulkanSwapchain(VkPhysicalDevice* physicalDevice, VulkanInstanc
 		VkImageView view;
 		auto result = vkCreateImageView(*logicalDevice, &createInfo, nullptr, &view);
 		if (result != VK_SUCCESS) {
-			LOGGER->Log("%s : %d", __FILE__, __LINE__);
 			throw new VulkanException("failed to create image view!", __LINE__, __FILE__);
 		}
 
@@ -182,7 +178,6 @@ void VulkanSwapchain::InitFrameBuffers(VulkanRenderPass* renderpass)
 		framebufferInfo.layers = 1;
 
 		if (vkCreateFramebuffer(*device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-			LOGGER->Log("%s : %d", __FILE__, __LINE__);
 			throw new VulkanException("failed to create framebuffer!", __LINE__, __FILE__);
 		}
 	}
@@ -200,7 +195,6 @@ void VulkanSwapchain::InitCommandBuffers(VulkanCommandPool * commandPool)
 	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
 	if (vkAllocateCommandBuffers(*device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw new VulkanException("failed to allocate command buffers!", __LINE__, __FILE__);
 	}
 

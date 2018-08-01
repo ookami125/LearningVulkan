@@ -1,7 +1,6 @@
 #include "VulkanDevice.h"
 #include "VulkanException.h"
 #include "VulkanInstance.h"
-#include "Logger.h"
 
 VulkanDevice::VulkanDevice(VkPhysicalDevice * physicalDevice, VulkanInstance* instance, std::vector<const char*> desiredExtensions, std::vector<const char*> desiredLayers)
 {
@@ -31,7 +30,6 @@ VulkanDevice::VulkanDevice(VkPhysicalDevice * physicalDevice, VulkanInstance* in
 	createInfo.ppEnabledLayerNames = desiredLayers.data();
 
 	if (vkCreateDevice(*physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw new VulkanException("failed to create logical device!", __LINE__, __FILE__);
 	}
 	

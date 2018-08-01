@@ -5,7 +5,6 @@
 #include "VulkanException.h"
 #include <vulkan\vulkan.h>
 #include <array>
-#include "Logger.h"
 
 VulkanRenderPass::VulkanRenderPass(VkPhysicalDevice* physicalDevice, VulkanDevice* device, VulkanSwapchain* swapchain) : device(device)
 {
@@ -62,7 +61,6 @@ VulkanRenderPass::VulkanRenderPass(VkPhysicalDevice* physicalDevice, VulkanDevic
 	renderPassInfo.pDependencies = &dependency;
 
 	if (vkCreateRenderPass(*device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-		LOGGER->Log("%s : %d", __FILE__, __LINE__);
 		throw new VulkanException("failed to create render pass!", __LINE__, __FILE__);
 	}
 }
