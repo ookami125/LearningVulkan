@@ -59,16 +59,16 @@ Mat4f MathUtils::scale(Vec4f v)
 
 Mat4f MathUtils::rotation(const Quatf& quat)
 {
-	float s, x, y, z;
-	quat.Store(&s, &x, &y, &z);
+	float w, x, y, z;
+	quat.Store(&w, &x, &y, &z);
 	const float x2 = x * x, y2 = y * y, z2 = z * z;
-	const float sx = s * x, sy = s * y, sz = s * z;
+	const float wx = w * x, wy = w * y, wz = w * z;
 	const float xz = x * z, yz = y * z, xy = x * y;
 	return Mat4f(
-		Vec4f(1 - 2 * (y2 + z2), 0 + 2 * (xy + sz), 0 + 2 * (xz - sy), 0.0f),
-		Vec4f(0 + 2 * (xy - sz), 1 - 2 * (x2 + z2), 0 + 2 * (sx + yz), 0.0f),
-		Vec4f(0 + 2 * (sy + xz), 0 + 2 * (yz - sx), 1 - 2 * (x2 + y2), 0.0f),
-		Vec4f(0.0f, 0.0f, 0.0f, 1.0f));
+		Vec4f(1 - 2 * (y2 + z2), 0 + 2 * (xy - wz), 0 + 2 * (xz + wy), 0.0f),
+		Vec4f(0 + 2 * (xy + wz), 1 - 2 * (x2 + z2), 0 + 2 * (wx - yz), 0.0f),
+		Vec4f(0 + 2 * (wy - xz), 0 + 2 * (yz + wx), 1 - 2 * (x2 + y2), 0.0f),
+		Vec4f(             0.0f,              0.0f,              0.0f, 1.0f));
 }
 
 Mat4f MathUtils::lookAt(Vec4f eye, Vec4f center, Vec4f up)
@@ -92,23 +92,46 @@ Mat4f MathUtils::lookAt(Vec4f eye, Vec4f center, Vec4f up)
 
 Quatf MathUtils::slerp(Quatf v0, Quatf v1, float ratio)
 {
-	v0 = v0.Normalize();
-	v1 = v1.Normalize();
+	//v0 = v0.Normalize();
+	//v1 = v1.Normalize();
+	//
+	//double dot = (v0*v1).compSum();
+	//if (dot < 0.0f) {
+	//	v1 = -v1;
+	//	dot = -dot;
+	//}
+	//if (dot > 0.9995) {
+	//	Quatf result = v0 + ratio * (v1 - v0);
+	//	return result.Normalize();
+	//}
+	//double theta_0 = acos(dot);
+	//double theta = theta_0 * ratio;
+	//double sin_theta_0 = sin(theta_0);
+	//double sin_theta = sin(theta);
+	//double s1 = sin_theta / sin_theta_0;
+	//double s0 = cos(theta) -dot * s1;
+	//return ((float)s0 * v0) + ((float)s1 * v1);
 
-	double dot = (v0*v1).compSum();
-	if (dot < 0.0f) {
-		v1 = -v1;
-		dot = -dot;
+	Quatf z = v1;
+
+	float cosTheta = v0.dot(v1);
+
+	// If cosTheta < 0, the interpolation will take the long way around the sphere.
+	// To fix this, one quat must be negated.
+	if (cosTheta < 0.0f)
+	{
+		z = -v1;
+		cosTheta = -cosTheta;
 	}
-	if (dot > 0.9995) {
-		Quatf result = v0 + ratio * (v1 - v0);
-		return result.Normalize();
+
+	// Perform a linear interpolation when cosTheta is close to 1 to avoid side effect of sin(angle) becoming a zero denominator
+	if (cosTheta > 1.0f - FLT_EPSILON)
+	{
+		return (v0 + (v1 - v0) * ratio).Normalize();
 	}
-	double theta_0 = acos(dot);
-	double theta = theta_0 * ratio;
-	double sin_theta_0 = sin(theta_0);
-	double sin_theta = sin(theta);
-	double s1 = sin_theta / sin_theta_0;
-	double s0 = cos(theta) -dot * s1;
-	return ((float)s0 * v0) + ((float)s1 * v1);
+	else
+	{
+		float angle = acos(cosTheta);
+		return (sin((1.0f - ratio) * angle) * v0 + sin(ratio * angle) * z) / sin(angle);
+	}
 }

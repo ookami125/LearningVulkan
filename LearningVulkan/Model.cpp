@@ -249,7 +249,7 @@ std::vector<Mat4f, AlignmentAllocator<Mat4f>> Model::GetAnimationFrame(int anima
 	animations[animationID]->GetAnimationFrame(mesh->boneMaps[animationID], (float)time);
 	auto bones = mesh->bones;
 	for (uint32_t i = 0; i < bones.size(); ++i)
-		bones[i] = bones[i] * mesh->boneOffsets[i];
+		bones[i] = mesh->boneOffsets[i] * bones[i].Transpose();
 	return bones;
 }
 

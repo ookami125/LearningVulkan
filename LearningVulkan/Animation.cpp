@@ -66,9 +66,23 @@ std::string Animation::GetBoneName(int i)
 //	return mats;
 //}
 
+static void printMat(const char* name, Mat4f m)
+{
+	printf("\n%s:\n", name);
+	float d[16];
+	m.row[0].Store(d);
+	m.row[1].Store(d + 4);
+	m.row[2].Store(d + 8);
+	m.row[3].Store(d + 12);
+	printf("%f %f %f %f\n", d[0], d[1], d[2], d[3]);
+	printf("%f %f %f %f\n", d[4], d[5], d[6], d[7]);
+	printf("%f %f %f %f\n", d[8], d[9], d[10], d[11]);
+	printf("%f %f %f %f\n", d[12], d[13], d[14], d[15]);
+}
+
 void Animation::GetAnimationFrame(std::vector<Mat4f*> boneMap, float time)
 {
-	//time = 0.0f;
+	//time = 3;
 	if (time > duration) time = fmod(time, duration);
 	//printf("time: %lf\n", time);
 	for (auto bone : bones)
@@ -76,8 +90,10 @@ void Animation::GetAnimationFrame(std::vector<Mat4f*> boneMap, float time)
 		auto parent = bone->GetParent();
 		Mat4f parentMat = parent ? *boneMap[parent->GetID()] : Mat4f(1);
 		Mat4f boneMat = bone->GetMatrix(time);
-		*boneMap[bone->GetID()] = boneMat.Transpose() * parentMat;
+		*boneMap[bone->GetID()] = boneMat * parentMat;
+		printMat(bone->GetName().c_str(), boneMat);
 	}
+	return;
 }
 
 KeyFrame* Bone::GetOrCreateKeyFrame(float time)
@@ -213,9 +229,13 @@ Mat4f KeyFrame::getMatrix()
 	glm::mat4 result2 = scale2 * rotate2 * translate2;
 
 	Mat4f translate = MathUtils::translate(this->translate);
-	Mat4f rotate = MathUtils::rotation(this->rotate).Transpose();
+	//printMat("translate", translate);
+	Mat4f rotate = MathUtils::rotation(this->rotate);// .Transpose();
+	//printMat("rotate", rotate);
 	Mat4f scale = MathUtils::scale(this->scale);
+	//printMat("scale", scale);
 	Mat4f result = translate  * rotate * scale;
+	//printMat("result", result);
 	return result;
 }
 
@@ -225,7 +245,8 @@ KeyFrame KeyFrame::lerp(KeyFrame * kf, float ratio)
 	keyFrame.type = this->type;
 	keyFrame.time = (time + (kf->time - time) * ratio);
 	keyFrame.translate = (translate + (kf->translate - translate) * (float)ratio);
-	keyFrame.rotate = MathUtils::slerp(kf->rotate, rotate, (float)ratio);
+	//glm::vec4 rot = glm::slerp(glm::fquat(), glm::fquat(), 0.0f);
+	keyFrame.rotate = MathUtils::slerp(rotate, kf->rotate, (float)ratio);
 	keyFrame.scale = (scale + (kf->scale - scale) * (float)ratio);
 	return keyFrame;
 }

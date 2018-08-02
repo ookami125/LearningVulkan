@@ -37,7 +37,7 @@ union alignas(16) Quatf
 
 	__forceinline void Load(float w, float x, float y, float z)
 	{
-		data = _mm_set_ps(w, x, y, z);
+		data = _mm_set_ps(z, y, x, w);
 	}
 
 	__forceinline void Store(float* w, float* x, float* y, float* z) const
@@ -95,6 +95,11 @@ union alignas(16) Quatf
 		return _mm_add_ps(t03, t12m);
 	}
 
+	__forceinline float dot(const Quatf & rhs) const
+	{
+		return Quatf(_mm_mul_ps(data, rhs)).compSum();
+	}
+
 	__forceinline Quatf operator-(const Quatf& rhs)
 	{
 		return _mm_sub_ps(data, rhs);
@@ -113,6 +118,11 @@ union alignas(16) Quatf
 	__forceinline Quatf operator*(const float& rhs)
 	{
 		return _mm_mul_ps(data, Quatf(rhs));
+	}
+
+	__forceinline Quatf operator/(const float& rhs)
+	{
+		return _mm_div_ps(data, Quatf(rhs));
 	}
 
 	__forceinline bool operator==(const Quatf & rhs) const
