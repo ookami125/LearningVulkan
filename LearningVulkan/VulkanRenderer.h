@@ -35,7 +35,8 @@ struct alignas(32) UBOModel {
 	//uint32_t diffuseTexture;
 	Mat4f model;
 	Mat4f bones[MAX_BONE_COUNT];
-	uint32_t arrayIndex[4];
+	//uint32_t boneIdx[4];
+	uint32_t textureId;
 };
 
 class VulkanRenderer
@@ -70,9 +71,14 @@ class VulkanRenderer
 	VulkanDynamicUBO* vuboModel;
 
 	int* uboTextures;
+	int imageCount = 0;
 	VulkanUniformBufferObject* vuboTextures;
+	VkDescriptorImageInfo	descriptorImageInfos[8];
+	Texture* textures[8];
 
-	VulkanImageSampler* imageSmapler;
+	VkSampler sampler;
+
+	//VulkanImageSampler* imageSmapler;
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;

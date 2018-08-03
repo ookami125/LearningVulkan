@@ -33,7 +33,13 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 	GetClientRect(hwnd, &rect);
 	width = rect.right - rect.left;
 	height = rect.bottom - rect.top;
-	instance = new VulkanInstance(hwnd, { "VK_KHR_surface", VK_EXT_DEBUG_REPORT_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_EXTENSION_NAME }, { "VK_LAYER_LUNARG_standard_validation" });
+	instance = new VulkanInstance(hwnd, { "VK_KHR_surface", VK_EXT_DEBUG_REPORT_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_EXTENSION_NAME }, {
+		"VK_LAYER_GOOGLE_threading",
+		"VK_LAYER_LUNARG_parameter_validation",
+		"VK_LAYER_LUNARG_object_tracker",
+		"VK_LAYER_LUNARG_core_validation",
+		"VK_LAYER_GOOGLE_unique_objects"
+	});
 	physicalDevice = instance->GetPhysicalSuitableDevice({ VK_KHR_SWAPCHAIN_EXTENSION_NAME  });
 	device = new VulkanDevice(&physicalDevice, instance, { VK_KHR_SWAPCHAIN_EXTENSION_NAME }, { "VK_LAYER_LUNARG_standard_validation" });
 	swapchain = new VulkanSwapchain(&physicalDevice, instance, device, width, height);
@@ -42,15 +48,23 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 	descriptorSetLayout = new VulkanDescriptorSetLayout(device,
 	{
 		{
+			1, 
 			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			VK_SHADER_STAGE_VERTEX_BIT
 		},
 		{
+			2,
 			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
 			VK_SHADER_STAGE_VERTEX_BIT
 		},
 		{
-			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			1,
+			VK_DESCRIPTOR_TYPE_SAMPLER,
+			VK_SHADER_STAGE_FRAGMENT_BIT
+		},
+		{
+			8,
+			VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
 			VK_SHADER_STAGE_FRAGMENT_BIT
 		}
 	});
@@ -60,15 +74,43 @@ VulkanRenderer::VulkanRenderer(HWND hwnd)
 	uboViewProj = aligned_new(UBOViewProj)();
 	vuboViewProj = new VulkanUniformBufferObject(device, &physicalDevice, sizeof(UBOViewProj), uboViewProj);
 	vuboModel = new VulkanDynamicUBO(device, &physicalDevice, sizeof(UBOModel), MAX_OBJECT_RENDER);
-	
+	//vuboModel = new VulkanDynamicUBO(device, &physicalDevice, sizeof(UBOModelTexture), MAX_OBJECT_RENDER);
+
 	descriptorPool = new VulkanDescriptorPool(device);
+
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_NEAREST;
+	samplerInfo.minFilter = VK_FILTER_NEAREST;
+
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+	samplerInfo.anisotropyEnable = 0.0f > 0.01f ? VK_TRUE : VK_FALSE;
+	samplerInfo.maxAnisotropy = 0.0f;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 0.0f;
+
+	VkResult res = vkCreateSampler(*device, &samplerInfo, 0, &sampler);
 
 	descriptorSets = descriptorPool->AllocateDescriptorSets(descriptorSetLayout, 3);
 
 	for (VkDescriptorSet descriptorSet : descriptorSets) {
 		descriptorPool->UpdateDescriptorSets(descriptorSet, 0, vuboViewProj);
 		descriptorPool->UpdateDescriptorSets(descriptorSet, 1, vuboModel);
-		//descriptorPool->UpdateDescriptorSets(descriptorSet, 2, textures);
+		VkDescriptorImageInfo samplerInfo = {};
+		samplerInfo.sampler = sampler;
+		descriptorPool->UpdateDescriptorSetsSampler(descriptorSet, 2, &samplerInfo, 1);
+		//descriptorPool->UpdateDescriptorSets(descriptorSet, 2, vuboTextures);
 		//descriptorPool->UpdateDescriptorSets(descriptorSet, 3, vuboTextures);
 	}
 
@@ -183,16 +225,18 @@ void VulkanRenderer::RegisterModel(Model* model)
 		model->textures.push_back(new Texture(tex));
 	}
 	for (Texture* texture : model->textures)
+	{
 		RegisterTexture(texture);
+	}
 
 	//model->rendererData = malloc(sizeof(VulkanModelData));
 
 	//((VulkanModelData*)model->rendererData)->ubo = new UBOModel();
 	//descriptorPool->UpdateDescriptorSets(descriptorSet, 1, ((VulkanModelData*)model->rendererData)->vubo);
-	auto texture = model->textures[0];
-	descriptorPool->UpdateDescriptorSets(descriptorSets[0], 2, texture, 1);
-	descriptorPool->UpdateDescriptorSets(descriptorSets[1], 2, texture, 1);
-	descriptorPool->UpdateDescriptorSets(descriptorSets[2], 2, texture, 1);
+	//auto texture = model->textures[0];
+	//descriptorPool->UpdateDescriptorSets(descriptorSets[0], 2, texture, 1);
+	//descriptorPool->UpdateDescriptorSets(descriptorSets[1], 2, texture, 1);
+	//descriptorPool->UpdateDescriptorSets(descriptorSets[2], 2, texture, 1);
 }
 
 void VulkanRenderer::UnregisterTexture(Texture * texture)
@@ -258,7 +302,15 @@ void VulkanRenderer::RenderModel(Model* model)
 	UBOModel* uboModel = (UBOModel*)vuboModel->GetUBO(renderCount);
 	memcpy(uboModel->bones, animFrame.data(), sizeof(Mat4f) * std::min((size_t)MAX_BONE_COUNT, animFrame.size()));
 	uboModel->model = Mat4f(1);// glm::rotate(glm::rotate(glm::scale(Mat4f(1.0f), glm::vec3(0.2f)), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	
+	textures[imageCount] = model->textures[0];
+	descriptorImageInfos[imageCount].sampler = VK_NULL_HANDLE;
+	descriptorImageInfos[imageCount].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	descriptorImageInfos[imageCount].imageView = ((VulkanTextureData*)model->textures[0]->rendererData)->image->GetImageView();
+	uboModel->textureId = imageCount++;
+
 	vuboModel->Update(renderCount);
+
 
 	for (Mesh* mesh : model->meshes)
 		RenderMesh(mesh);
@@ -269,48 +321,12 @@ void VulkanRenderer::RenderModel(Model* model)
 void VulkanRenderer::StartRender()
 {
 	renderCount = 0;
+	imageCount = 0;
 	swapchain->NextFrame();
 
-	//uboViewProj->view = Mat4f(1);//glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	//uboViewProj->proj = Mat4f(1);//glm::perspective(glm::radians(45.0f), width / (float)height, 0.1f, 100.0f);
 	uboViewProj->proj = MathUtils::projection(90.f, width / (float)height, 0.1f, 1000.0f);
 	uboViewProj->view = MathUtils::lookAt(Vec4f(x, y, z, 1.0), Vec4f(0, 0, 1, 1), Vec4f(0.0, 1.0, 0.0, 0.0)).Transpose();
 	uboViewProj->proj.row[1] *= Vec4f(1, -1, 1, 1);
-	//uboViewProj->proj = Mat4f(
-	//	Vec4f(-0.530330f, 0.379642f, -0.596669f, -0.596550f),
-	//	Vec4f(0.530330f,  0.379642f, -0.596669f, -0.596550f),
-	//	Vec4f(0.000000f, -0.843649f, -0.537002f, -0.536895f),
-	//	Vec4f(0.000000f,  0.843650f, 17.103388f, 17.299950f)
-	//);
-	//uboViewProj->view = Mat4f(1);
-	//{
-	//	Mat4f temp = uboViewProj->view;
-	//
-	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[0])[0], ((float*)&temp.row[0])[1], ((float*)&temp.row[0])[2], ((float*)&temp.row[0])[3]);
-	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[1])[0], ((float*)&temp.row[1])[1], ((float*)&temp.row[1])[2], ((float*)&temp.row[1])[3]);
-	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[2])[0], ((float*)&temp.row[2])[1], ((float*)&temp.row[2])[2], ((float*)&temp.row[2])[3]);
-	//	printf("%f, %f, %f, %f\n\n", ((float*)&temp.row[3])[0], ((float*)&temp.row[3])[1], ((float*)&temp.row[3])[2], ((float*)&temp.row[3])[3]);
-	//}
-	//
-	//{
-	//	Mat4f temp = uboViewProj->proj;
-	//
-	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[0])[0], ((float*)&temp.row[0])[1], ((float*)&temp.row[0])[2], ((float*)&temp.row[0])[3]);
-	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[1])[0], ((float*)&temp.row[1])[1], ((float*)&temp.row[1])[2], ((float*)&temp.row[1])[3]);
-	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[2])[0], ((float*)&temp.row[2])[1], ((float*)&temp.row[2])[2], ((float*)&temp.row[2])[3]);
-	//	printf("%f, %f, %f, %f\n\n", ((float*)&temp.row[3])[0], ((float*)&temp.row[3])[1], ((float*)&temp.row[3])[2], ((float*)&temp.row[3])[3]);
-	//}
-	//
-	//{
-	//	Mat4f temp = uboViewProj->proj * uboViewProj->view;
-	//	
-	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[0])[0], ((float*)&temp.row[0])[1], ((float*)&temp.row[0])[2], ((float*)&temp.row[0])[3]);
-	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[1])[0], ((float*)&temp.row[1])[1], ((float*)&temp.row[1])[2], ((float*)&temp.row[1])[3]);
-	//	printf("%f, %f, %f, %f\n", ((float*)&temp.row[2])[0], ((float*)&temp.row[2])[1], ((float*)&temp.row[2])[2], ((float*)&temp.row[2])[3]);
-	//	printf("%f, %f, %f, %f\n\n", ((float*)&temp.row[3])[0], ((float*)&temp.row[3])[1], ((float*)&temp.row[3])[2], ((float*)&temp.row[3])[3]);
-	//}
-	//uboViewProj->proj.row[1] *= Vec4f(1, -1, 1, 1);
-	//uboViewProj->proj[1][1] *= -1;
 	vuboViewProj->Update();
 
 	activeCommandBuffer = swapchain->GetNextCommandBuffer();
@@ -343,6 +359,8 @@ void VulkanRenderer::StartRender()
 
 void VulkanRenderer::EndRender()
 {
+	descriptorPool->UpdateDescriptorSets(descriptorSets[swapchain->GetCurrentFrameIndex()], 3, descriptorImageInfos, imageCount);
+
 	vkCmdEndRenderPass(activeCommandBuffer);
 
 	if (vkEndCommandBuffer(activeCommandBuffer) != VK_SUCCESS) {
@@ -376,7 +394,7 @@ void VulkanRenderer::Present()
 
 	auto error = vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 	if (error != VK_SUCCESS) {
-		throw std::runtime_error("failed to submit draw command buffer! " + error);
+		throw std::exception("failed to submit draw command buffer! " + error);
 	}
 
 	//

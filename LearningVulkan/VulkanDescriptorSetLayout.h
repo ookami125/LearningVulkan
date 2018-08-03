@@ -5,6 +5,13 @@
 
 class VulkanDevice;
 
+struct VulkanDescriptorSet
+{
+	int count = 1;
+	VkDescriptorType type;
+	VkShaderStageFlags shader;
+};
+
 class VulkanDescriptorSetLayout
 {
 	VulkanDevice* device;
@@ -12,7 +19,7 @@ class VulkanDescriptorSetLayout
 	VkDescriptorSetLayout descriptorSetLayout;
 public:
 	VulkanDescriptorSetLayout(VulkanDevice* device);
-	VulkanDescriptorSetLayout(VulkanDevice* device, std::vector<std::pair<VkDescriptorType, VkShaderStageFlags>> options);
+	VulkanDescriptorSetLayout(VulkanDevice* device, std::vector<VulkanDescriptorSet> options);
 	~VulkanDescriptorSetLayout();
 
 	VkDescriptorSetLayout* GetLayout();

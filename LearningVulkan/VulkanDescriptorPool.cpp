@@ -110,6 +110,38 @@ void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, u
 
 }
 
+void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, VkDescriptorImageInfo* descriptorImageInfos, uint32_t count)
+{
+	VkWriteDescriptorSet descriptorWrites = {};
+	descriptorWrites = {};
+	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites.dstBinding = binding;
+	descriptorWrites.dstArrayElement = 0;
+	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	descriptorWrites.descriptorCount = count;
+	descriptorWrites.pBufferInfo = 0;
+	descriptorWrites.dstSet = descriptorSet;
+	descriptorWrites.pImageInfo = descriptorImageInfos;
+
+	vkUpdateDescriptorSets(*device, 1, &descriptorWrites, 0, nullptr);
+}
+
+void VulkanDescriptorPool::UpdateDescriptorSetsSampler(VkDescriptorSet descriptorSet, uint32_t binding, VkDescriptorImageInfo* descriptorImageInfos, uint32_t count)
+{
+	VkWriteDescriptorSet descriptorWrites = {};
+	descriptorWrites = {};
+	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites.dstBinding = binding;
+	descriptorWrites.dstArrayElement = 0;
+	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+	descriptorWrites.descriptorCount = count;
+	descriptorWrites.pBufferInfo = 0;
+	descriptorWrites.dstSet = descriptorSet;
+	descriptorWrites.pImageInfo = descriptorImageInfos;
+
+	vkUpdateDescriptorSets(*device, 1, &descriptorWrites, 0, nullptr);
+}
+
 void VulkanDescriptorPool::UpdateDescriptorSets(VkDescriptorSet descriptorSet, uint32_t binding, Texture* texture, uint32_t count)
 {
 	VkDescriptorImageInfo imageInfo = {};

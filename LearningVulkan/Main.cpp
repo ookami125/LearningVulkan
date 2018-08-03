@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 	//		printf("alignment is %d: %d", alignof(Vec4f), ((ptrdiff_t)test) % alignof(Vec4f));
 	//}
 
-	try {
+	//try {
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		GLFWwindow* window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
@@ -91,12 +91,12 @@ int main(int argc, char** argv)
 
 		delete renderer;
 		glfwDestroyWindow(window);
-	}
-	catch (const std::exception& e)
-	{
-		std::ofstream out("output.log");
-		out << e.what();
-		out.close();
-	}
+	//}
+	//catch (const std::exception& e)
+	//{
+	//	std::ofstream out("output.log");
+	//	out << e.what();
+	//	out.close();
+	//}
 	return 0;
 }

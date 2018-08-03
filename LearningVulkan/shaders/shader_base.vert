@@ -9,7 +9,7 @@ layout(binding = 0) uniform ViewProj {
 layout(binding = 1) uniform ModelData {
     mat4 model;
 	mat4 bones[62];
-	vec4 arrayIndex;
+	uint textureId;
 } inModelData;
 
 
@@ -22,6 +22,7 @@ layout(location = 4) in vec4 inBoneWeight;
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out vec4 fragWorldPos;
+layout(location = 3) out uint TextureID;
 
 out gl_PerVertex {
     vec4 gl_Position;
