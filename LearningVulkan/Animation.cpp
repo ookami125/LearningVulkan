@@ -82,7 +82,7 @@ static void printMat(const char* name, Mat4f m)
 
 void Animation::GetAnimationFrame(std::vector<Mat4f*> boneMap, float time)
 {
-	//time = 3;
+	time *= tps;
 	if (time > duration) time = fmod(time, duration);
 	//printf("time: %lf\n", time);
 	for (auto bone : bones)
@@ -90,8 +90,8 @@ void Animation::GetAnimationFrame(std::vector<Mat4f*> boneMap, float time)
 		auto parent = bone->GetParent();
 		Mat4f parentMat = parent ? *boneMap[parent->GetID()] : Mat4f(1);
 		Mat4f boneMat = bone->GetMatrix(time);
-		*boneMap[bone->GetID()] = boneMat * parentMat;
-		printMat(bone->GetName().c_str(), boneMat);
+		*boneMap[bone->GetID()] = parentMat * boneMat;
+		//printMat(bone->GetName().c_str(), boneMat);
 	}
 	return;
 }
@@ -212,21 +212,21 @@ Mat4f Bone::GetMatrix(float time)
 	//return glm::rotate(Mat4f(1), (float)time, glm::vec3(0, 1, 0));
 }
 
-#define GLM_FORCE_SWIZZLE
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
+//#define GLM_FORCE_SWIZZLE
+//#define GLM_ENABLE_EXPERIMENTAL
+//#include <glm/glm.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/gtx/quaternion.hpp>
 
 Mat4f KeyFrame::getMatrix()
 {
-	glm::vec4 thisTranslate; this->translate.Store(&thisTranslate.x, &thisTranslate.y, &thisTranslate.z, &thisTranslate.w);
-	glm::mat4 translate2 = glm::transpose(glm::translate(glm::mat4(1.0), glm::vec3(thisTranslate.xyz)));
-	glm::quat thisRotate; this->rotate.Store(&thisRotate.w, &thisRotate.x, &thisRotate.y, &thisRotate.z);
-	glm::mat4 rotate2    = glm::transpose(glm::toMat4(thisRotate));
-	glm::vec4 thisScale; this->scale.Store(&thisScale.x, &thisScale.y, &thisScale.z, &thisScale.w);
-	glm::mat4 scale2     = glm::transpose(glm::scale(glm::mat4(1.0), glm::vec3(thisScale.xyz)));
-	glm::mat4 result2 = scale2 * rotate2 * translate2;
+	//glm::vec4 thisTranslate; this->translate.Store(&thisTranslate.x, &thisTranslate.y, &thisTranslate.z, &thisTranslate.w);
+	//glm::mat4 translate2 = glm::transpose(glm::translate(glm::mat4(1.0), glm::vec3(thisTranslate.xyz)));
+	//glm::quat thisRotate; this->rotate.Store(&thisRotate.w, &thisRotate.x, &thisRotate.y, &thisRotate.z);
+	//glm::mat4 rotate2    = glm::transpose(glm::toMat4(thisRotate));
+	//glm::vec4 thisScale; this->scale.Store(&thisScale.x, &thisScale.y, &thisScale.z, &thisScale.w);
+	//glm::mat4 scale2     = glm::transpose(glm::scale(glm::mat4(1.0), glm::vec3(thisScale.xyz)));
+	//glm::mat4 result2 = scale2 * rotate2 * translate2;
 
 	Mat4f translate = MathUtils::translate(this->translate);
 	//printMat("translate", translate);

@@ -38,10 +38,10 @@ int main(int argc, char** argv)
 		VulkanRenderer* renderer = new VulkanRenderer(handle);
 
 		Model* character = aligned_new(Model)("models/Box_Walk.fbx");
-		//Model* character2 = aligned_new(Model)("models/Samba Dancing.fbx");
+		Model* character2 = aligned_new(Model)("models/Samba Dancing.fbx");
 
 		renderer->RegisterModel(character);
-		//renderer->RegisterModel(character2);
+		renderer->RegisterModel(character2);
 
 		int fps_counter = 0;
 		int fps = 0;
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 
 			renderer->StartRender();
 			renderer->RenderModel(character);
-			//renderer->RenderModel(character2);
+			renderer->RenderModel(character2);
 			renderer->EndRender();
 			renderer->Present();
 			fps_counter++;
@@ -86,8 +86,8 @@ int main(int argc, char** argv)
 
 		renderer->UnregisterModel(character);
 		aligned_delete(character);
-		//renderer->UnregisterModel(character2);
-		//aligned_delete(character2);
+		renderer->UnregisterModel(character2);
+		aligned_delete(character2);
 
 		delete renderer;
 		glfwDestroyWindow(window);

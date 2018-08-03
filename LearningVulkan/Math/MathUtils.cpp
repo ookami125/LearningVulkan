@@ -57,18 +57,43 @@ Mat4f MathUtils::scale(Vec4f v)
 	);
 }
 
+//Mat4f MathUtils::rotation(const Quatf& quat)
+//{
+//	float w, x, y, z;
+//	quat.Store(&w, &x, &y, &z);
+//	const float x2 = x * x, y2 = y * y, z2 = z * z;
+//	const float wx = w * x, wy = w * y, wz = w * z;
+//	const float xz = x * z, yz = y * z, xy = x * y;
+//	return Mat4f(
+//		Vec4f(1 - 2 * (y2 + z2), 0 + 2 * (xy + wz), 0 + 2 * (xz - wy), 0.0f),
+//		Vec4f(0 + 2 * (xy - wz), 1 - 2 * (x2 + z2), 0 + 2 * (wx + yz), 0.0f),
+//		Vec4f(0 + 2 * (wy + xz), 0 + 2 * (yz - wx), 1 - 2 * (x2 + y2), 0.0f),
+//		Vec4f(             0.0f,              0.0f,              0.0f, 1.0f));
+//}
+
 Mat4f MathUtils::rotation(const Quatf& quat)
 {
 	float w, x, y, z;
 	quat.Store(&w, &x, &y, &z);
-	const float x2 = x * x, y2 = y * y, z2 = z * z;
-	const float wx = w * x, wy = w * y, wz = w * z;
-	const float xz = x * z, yz = y * z, xy = x * y;
-	return Mat4f(
-		Vec4f(1 - 2 * (y2 + z2), 0 + 2 * (xy - wz), 0 + 2 * (xz + wy), 0.0f),
-		Vec4f(0 + 2 * (xy + wz), 1 - 2 * (x2 + z2), 0 + 2 * (wx - yz), 0.0f),
-		Vec4f(0 + 2 * (wy - xz), 0 + 2 * (yz + wx), 1 - 2 * (x2 + y2), 0.0f),
-		Vec4f(             0.0f,              0.0f,              0.0f, 1.0f));
+	float qxx(x * x);
+	float qyy(y * y);
+	float qzz(z * z);
+	float qxz(x * z);
+	float qxy(x * y);
+	float qyz(y * z);
+	float qwx(w * x);
+	float qwy(w * y);
+	float qwz(w * z);
+
+	Mat4f Result(
+		Vec4f(1.0f - 2.0f * (qyy + qzz), 2.0f * (qxy - qwz), 2.0f * (qxz + qwy), 0.0f),
+		Vec4f(2.0f * (qxy + qwz), 1.0f - 2.0f * (qxx + qzz), 2.0f * (qyz - qwx), 0.0f),
+		Vec4f(2.0f * (qxz - qwy), 2.0f * (qyz + qwx), 1.0f - 2.0f * (qxx + qyy), 0.0f),
+		Vec4f(0.0f, 0.0f, 0.0f, 1.0f)
+	);
+
+	return Result;
+
 }
 
 Mat4f MathUtils::lookAt(Vec4f eye, Vec4f center, Vec4f up)
